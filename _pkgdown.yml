@@ -3,4 +3,20 @@ url: https://ccao-data-science---modeling.gitlab.io/packages/lightsnip/
 
 reference:
 
-
+- title: Functions
+- subtitle: Parsnip bindings
+  desc: >
+    This package includes parsnip bindings and functions which add lightgbm
+    to the parsnip `boost_tree()` model. These bindings load when the package
+    loads.
+- subtitle: Tidymodels helpers
+  desc: >
+    Utility functions for common Tidymodels tasks, such as predicting on new
+    data, cleaning outputs, and saving/loading fit objects.
+- contents:
+  - axe_recipe
+  - axe_tune_data
+  - lgbm_update_params
+  - lgbm_predict
+  - lgbm_load
+  - lgbm_save

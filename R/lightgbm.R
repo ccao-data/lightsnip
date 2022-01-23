@@ -1,7 +1,8 @@
-#' Wrapper to add `lightgbm` engine to the parsnip `boost_tree` model
+#' Wrapper to add \code{lightgbm} engine to the parsnip \code{boost_tree} model
 #' specification. Gets called when the package loads
 #'
 #' @return NULL
+#' @noRd
 #' @export
 add_boost_tree_lightgbm <- function() {
   parsnip::set_model_engine("boost_tree", mode = "regression", eng = "lightgbm")
@@ -107,6 +108,7 @@ add_boost_tree_lightgbm <- function() {
   )
 }
 
+
 prepare_df_lgbm <- function(x, y = NULL) {
   categorical_cols <- categorical_columns(x)
   x <- categorical_features_to_int(x, categorical_cols)
@@ -114,10 +116,11 @@ prepare_df_lgbm <- function(x, y = NULL) {
   return(x)
 }
 
-#' Boosted trees via lightgbm
+
+#' Boosted trees via LightGBM
 #'
-#' \code{\link{lightgbm_train}} is a wrapper for \code{\link[lightgbm]}
-#'  tree-based models where all of the model arguments are in the main function.
+#' @description \code{\link{lightgbm_train}} is a wrapper for
+#'  \code{\link[lightgbm]{lgb.train}} tree-based models.
 #'
 #' @param x A data frame or matrix of predictors.
 #' @param y A numeric vector of outcome data.
@@ -134,7 +137,7 @@ prepare_df_lgbm <- function(x, y = NULL) {
 #' @param ... Other options to pass to \code{\link[lightgbm]{lightgbm.train}}.
 #'
 #' @return A fitted \code{lgb.Booster} object.
-#' @keywords internal
+#' @noRd
 #' @export
 train_lightgbm <- function(x,
                            y,
@@ -232,6 +235,7 @@ train_lightgbm <- function(x,
 #' @param ... Additional named arguments passed to the \code{predict()} method
 #'   of the lgb.Booster object passed to object.
 #'
+#' @noRd
 #' @export
 pred_lgb_reg_num <- function(object, new_data, ...) {
   stats::predict(object$fit, prepare_df_lgbm(new_data),
