@@ -10,22 +10,25 @@ URL: https://ccao-data-science---modeling.gitlab.io/packages/lightsnip/, https:/
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Depends: 
-    parsnip (>= 0.1.4)
 Imports: 
+    butcher,
     dplyr,
+    lightgbm,
+    parsnip (>= 0.1.4),
     purrr,
+    recipes,
     rlang,
     stats,
-    tibble
+    tibble,
+    zip
 Suggests: 
     covr,
     testthat (>= 2.1.0),
-    tidymodels,
     knitr,
-    lightgbm,
     modeldata,
     rmarkdown,
+    lintr,
+    pkgdown,
     readr,
     glue,
     scales,
@@ -33,5 +36,6 @@ Suggests:
     rsample, 
     tidyr, 
     tune, 
+    workflows,
     yardstick
 RoxygenNote: 7.1.2
