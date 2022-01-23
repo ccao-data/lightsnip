@@ -5,7 +5,7 @@ Version: 0.0.1
 Authors@R: c(
     person(given = "Dan", family = "Snow", email="daniel.snow@cookcountyil.gov", role=c("aut", "cre"))
   )
-Description: Provides an expanded LightGBM engine for the parsnip package
+Description: Provides an expanded LightGBM engine for the parsnip package.
 URL: https://ccao-data-science---modeling.gitlab.io/packages/lightsnip/, https://gitlab.com/ccao-data-science---modeling/packages/lightsnip 
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
@@ -30,7 +30,6 @@ Suggests:
     lintr,
     pkgdown,
     readr,
-    glue,
     scales,
     jsonlite, 
     rsample, 

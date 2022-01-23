@@ -1,3 +1,5 @@
 library(testthat)
-library(treesnip)
-test_check("treesnip")
+library(modeldata)
+library(lightsnip)
+library(magrittr)
+test_check("lightsnip")

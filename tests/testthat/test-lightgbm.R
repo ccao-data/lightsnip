@@ -10,8 +10,8 @@ test_that('lightgbm alternate objective', {
   skip_if_not_installed("lightgbm")
 
   spec <- boost_tree(mtry = 1, trees = 50, tree_depth = 15, min_n = 1) %>%
-    set_engine("lightgbm", objective = "huber") %>%
-    set_mode("regression")
+    parsnip::set_engine("lightgbm", objective = "huber") %>%
+    parsnip::set_mode("regression")
 
   lgb_fit <- spec %>% fit(mpg ~ ., data = mtcars)
 
@@ -92,11 +92,3 @@ test_that("lightgbm tree_depth", {
     expect_all_modes_works(model, 'lightgbm')
   }
 })
-
-test_that("lightgbm multi_predict", {
-  model <- parsnip::boost_tree(mtry = 5, trees = 5, mode = "regression", min_n = 1)
-  model <- parsnip::set_engine(model, "lightgbm")
-
-  expect_multi_predict_works(model)
-})
-
