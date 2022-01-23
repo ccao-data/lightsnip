@@ -18,33 +18,34 @@ train_lightgbm(
 )
 }
 \arguments{
-\item{x}{A data frame or matrix of predictors}
+\item{x}{A data frame or matrix of predictors.}
 
-\item{y}{A vector (factor or numeric) or matrix (numeric) of outcome data.}
+\item{y}{A numeric vector of outcome data.}
 
 \item{max_depth}{An integer for the maximum depth of the tree.}
 
 \item{num_iterations}{An integer for the number of boosting iterations.}
 
-\item{learning_rate}{A numeric value between zero and one to control the learning rate.}
+\item{learning_rate}{A numeric value between zero and one to control
+the learning rate.}
 
 \item{feature_fraction}{Subsampling proportion of columns.}
 
-\item{min_data_in_leaf}{A numeric value for the minimum sum of instances needed
-in a child to continue to split.}
+\item{min_data_in_leaf}{A numeric value for the minimum sum of instances
+needed in a child to continue to split.}
 
-\item{min_gain_to_split}{A number for the minimum loss reduction required to make a
-further partition on a leaf node of the tree.}
+\item{min_gain_to_split}{A number for the minimum loss reduction required
+to make a further partition on a leaf node of the tree.}
 
 \item{bagging_fraction}{Subsampling proportion of rows.}
 
-\item{...}{Other options to pass to `lightgbm.train`.}
+\item{...}{Other options to pass to \code{\link[lightgbm]{lightgbm.train}}.}
 }
 \value{
-A fitted `lightgbm.Model` object.
+A fitted \code{lgb.Booster} object.
 }
 \description{
-`lightgbm_train` is a wrapper for `lightgbm` tree-based models
- where all of the model arguments are in the main function.
+\code{\link{lightgbm_train}} is a wrapper for \code{\link[lightgbm]}
+ tree-based models where all of the model arguments are in the main function.
 }
 \keyword{internal}

@@ -1,4 +1,4 @@
-test_that("categorical features are identified in data.frames and tibbles",{
+test_that("categorical features are identified in data.frames and tibbles", {
   test_frame <- data.frame(
     num1 = 1:10,
     cat1 = letters[1:10],
@@ -9,15 +9,15 @@ test_that("categorical features are identified in data.frames and tibbles",{
   test_frame2 <- tibble::as_tibble(test_frame)
   expect_equal(
     categorical_columns(test_frame),
-    c(2,4)
+    c(2, 4)
   )
   expect_equal(
     categorical_columns(test_frame2),
-    c(2,4)
+    c(2, 4)
   )
 })
 
-test_that("categorical features are replaced with integers",{
+test_that("categorical features are replaced with integers", {
   test_frame <- data.frame(
     num1 = 1:10,
     cat1 = letters[1:10],
@@ -32,7 +32,7 @@ test_that("categorical features are replaced with integers",{
     cat2 = 9:0
   )
   expect_equal(
-    categorical_features_to_int(test_frame, c(2,4)),
+    categorical_features_to_int(test_frame, c(2, 4)),
     expected
   )
 })

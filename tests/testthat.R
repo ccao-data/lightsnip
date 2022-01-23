@@ -1,5 +1,3 @@
 library(testthat)
-library(modeldata)
 library(lightsnip)
-library(magrittr)
 test_check("lightsnip")

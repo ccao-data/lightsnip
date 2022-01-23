@@ -3,11 +3,11 @@
 \name{add_boost_tree_lightgbm}
 \alias{add_boost_tree_lightgbm}
 \title{Wrapper to add `lightgbm` engine to the parsnip `boost_tree` model
-specification}
+specification. Gets called when the package loads}
 \usage{
 add_boost_tree_lightgbm()
 }
 \description{
 Wrapper to add `lightgbm` engine to the parsnip `boost_tree` model
-specification
+specification. Gets called when the package loads
 }

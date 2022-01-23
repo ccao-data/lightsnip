@@ -1,5 +1,5 @@
 #' Wrapper to add `lightgbm` engine to the parsnip `boost_tree` model
-#' specification
+#' specification. Gets called when the package loads
 #'
 #' @return NULL
 #' @export
@@ -39,7 +39,7 @@ add_boost_tree_lightgbm <- function() {
     value = list(
       pre = NULL,
       post = NULL,
-      func = c(pkg = "lightsnip", fun = "predict_lightgbm_regression_numeric"),
+      func = c(pkg = "lightsnip", fun = "pred_lgb_reg_num"),
       args = list(
         object = quote(object),
         new_data = quote(new_data)
@@ -48,7 +48,7 @@ add_boost_tree_lightgbm <- function() {
   )
 
 
-  # model args ----------------------------------------------------
+  ##### Model args #####
   parsnip::set_model_arg(
     model = "boost_tree",
     eng = "lightgbm",
@@ -116,36 +116,45 @@ prepare_df_lgbm <- function(x, y = NULL) {
 
 #' Boosted trees via lightgbm
 #'
-#' `lightgbm_train` is a wrapper for `lightgbm` tree-based models
-#'  where all of the model arguments are in the main function.
+#' \code{\link{lightgbm_train}} is a wrapper for \code{\link[lightgbm]}
+#'  tree-based models where all of the model arguments are in the main function.
 #'
-#' @param x A data frame or matrix of predictors
-#' @param y A vector (factor or numeric) or matrix (numeric) of outcome data.
+#' @param x A data frame or matrix of predictors.
+#' @param y A numeric vector of outcome data.
 #' @param max_depth An integer for the maximum depth of the tree.
 #' @param num_iterations An integer for the number of boosting iterations.
-#' @param learning_rate A numeric value between zero and one to control the learning rate.
+#' @param learning_rate A numeric value between zero and one to control
+#'   the learning rate.
 #' @param feature_fraction Subsampling proportion of columns.
-#' @param min_data_in_leaf A numeric value for the minimum sum of instances needed
-#'  in a child to continue to split.
-#' @param min_gain_to_split A number for the minimum loss reduction required to make a
-#'  further partition on a leaf node of the tree.
+#' @param min_data_in_leaf A numeric value for the minimum sum of instances
+#'  needed in a child to continue to split.
+#' @param min_gain_to_split A number for the minimum loss reduction required
+#'  to make a further partition on a leaf node of the tree.
 #' @param bagging_fraction Subsampling proportion of rows.
-#' @param ... Other options to pass to `lightgbm.train`.
-#' @return A fitted `lightgbm.Model` object.
+#' @param ... Other options to pass to \code{\link[lightgbm]{lightgbm.train}}.
+#'
+#' @return A fitted \code{lgb.Booster} object.
 #' @keywords internal
 #' @export
-train_lightgbm <- function(x, y, max_depth = 17, num_iterations = 10, learning_rate = 0.1,
-                           feature_fraction = 1, min_data_in_leaf = 20, min_gain_to_split = 0, bagging_fraction = 1, ...) {
-
+train_lightgbm <- function(x,
+                           y,
+                           max_depth = 17,
+                           num_iterations = 10,
+                           learning_rate = 0.1,
+                           feature_fraction = 1,
+                           min_data_in_leaf = 20,
+                           min_gain_to_split = 0,
+                           bagging_fraction = 1,
+                           ...) {
   force(x)
   force(y)
   others <- list(...)
 
   # feature_fraction ------------------------------
-  if(!is.null(feature_fraction)) {
-    feature_fraction <- feature_fraction/ncol(x)
+  if (!is.null(feature_fraction)) {
+    feature_fraction <- feature_fraction / ncol(x)
   }
-  if(feature_fraction > 1) {
+  if (feature_fraction > 1) {
     feature_fraction <- 1
   }
 
@@ -159,17 +168,6 @@ train_lightgbm <- function(x, y, max_depth = 17, num_iterations = 10, learning_r
     if (is.numeric(y)) {
       others$num_class <- 1
       others$objective <- "regression"
-    } else {
-      lvl <- levels(y)
-      lvls <- length(lvl)
-      y <- as.numeric(y) - 1
-      if (lvls == 2) {
-        others$num_class <- 1
-        others$objective <- "binary"
-      } else {
-        others$num_class <- lvls
-        others$objective <- "multiclass"
-      }
     }
   }
 
@@ -187,15 +185,19 @@ train_lightgbm <- function(x, y, max_depth = 17, num_iterations = 10, learning_r
   others <- others[!(names(others) %in% c("data", names(arg_list)))]
 
   # parallelism should be explicitly specified by the user
-  if(all(sapply(others[c("num_threads", "num_thread", "nthread", "nthreads", "n_jobs")], is.null))) others$num_threads <- 1L
+  nthreads_args <- c(
+    "num_threads", "num_thread",
+    "nthread", "nthreads", "n_jobs"
+  )
+  if (all(sapply(others[nthreads_args], is.null))) others$num_threads <- 1L
 
-  if(max_depth > 17) {
+  if (max_depth > 17) {
     warning("max_depth > 17, num_leaves truncated to 2^17 - 1")
     max_depth <- 17
   }
 
-  if(is.null(others$num_leaves)) {
-    others$num_leaves = max(2^max_depth - 1, 2)
+  if (is.null(others$num_leaves)) {
+    others$num_leaves <- max(2^max_depth - 1, 2)
   }
 
   arg_list <- purrr::compact(c(arg_list, others))
@@ -223,42 +225,17 @@ train_lightgbm <- function(x, y, max_depth = 17, num_iterations = 10, learning_r
 #'
 #' Not intended for direct use.
 #'
-#' @param object a fitted object.
+#' @param object A fitted object.
 #'
-#' @param new_data data frame in which to look for variables with which to predict.
-#' @param ... Additional named arguments passed to the predict() method of the lgb.Booster object passed to object.
+#' @param new_data Data frame in which to look for variables with
+#'   which to predict.
+#' @param ... Additional named arguments passed to the \code{predict()} method
+#'   of the lgb.Booster object passed to object.
 #'
 #' @export
-predict_lightgbm_regression_numeric <- function(object, new_data, ...) {
-  # train_colnames <- object$fit$.__enclos_env__$private$train_set$get_colnames()
-  p <- stats::predict(object$fit, prepare_df_lgbm(new_data), reshape = TRUE,
-                      params = list(predict_disable_shape_check=TRUE), ...)
-  p
+pred_lgb_reg_num <- function(object, new_data, ...) {
+  stats::predict(object$fit, prepare_df_lgbm(new_data),
+    reshape = TRUE,
+    params = list(predict_disable_shape_check = TRUE), ...
+  )
 }
-
-
-lightgbm_by_tree <- function(tree, object, new_data, type = NULL) {
-
-  # switch based on prediction type
-  if (object$spec$mode == "regression") {
-    pred <- predict_lightgbm_regression_numeric(object, new_data, num_iteration = tree)
-    pred <- tibble::tibble(.pred = pred)
-    nms <- names(pred)
-  } else {
-    if (type == "class") {
-      pred <- predict_lightgbm_classification_class(object, new_data, num_iteration = tree)
-      pred <- tibble::tibble(.pred_class = factor(pred, levels = object$lvl))
-    } else {
-      pred <- predict_lightgbm_classification_prob(object, new_data, num_iteration = tree)
-      names(pred) <- paste0(".pred_", names(pred))
-    }
-    nms <- names(pred)
-  }
-  pred[["trees"]] <- tree
-  pred[[".row"]] <- 1:nrow(new_data)
-  pred[, c(".row", "trees", nms)]
-}
-
-
-
-
