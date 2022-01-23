@@ -18,11 +18,3 @@ Remove unnecessary attribute data from iteration results objects
 created by \code{\link[tune]{tune_grid}} and \code{\link[tune]{tune_bayes}}.
 This makes the parameter object significantly smaller when saved to disk.
 }
-\seealso{
-Other model_funs: 
-\code{\link{axe_recipe}()},
-\code{\link{lgbm_load}()},
-\code{\link{lgbm_save}()},
-\code{\link{lgbm_update_params}()}
-}
-\concept{model_funs}

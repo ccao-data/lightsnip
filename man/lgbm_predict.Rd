@@ -4,7 +4,7 @@
 \alias{lgbm_predict}
 \title{Predict values using a trained model and recipe}
 \usage{
-lgbm_predict(spec, recipe, data, exp = FALSE)
+lgbm_predict(spec, recipe, data)
 }
 \arguments{
 \item{spec}{A parsnip model specification object. Must be trained.}
@@ -13,9 +13,6 @@ lgbm_predict(spec, recipe, data, exp = FALSE)
 
 \item{data}{New data to get predictions from. Will be pre-processed by the
 specified \code{recipe}.}
-
-\item{exp}{Exponentiate the returned prediction (assumed to be natural log).
-Default TRUE.}
 }
 \value{
 A vector of predictions from the model given the data and recipe

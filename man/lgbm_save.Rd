@@ -17,11 +17,3 @@ a workaround to split the LightGBM model and parsnip specification into
 separate files and then zip them together. This is necessary because LightGBM
 models really do not like being saved with \code{saveRDS()}.
 }
-\seealso{
-Other model_funs: 
-\code{\link{axe_recipe}()},
-\code{\link{axe_tune_data}()},
-\code{\link{lgbm_load}()},
-\code{\link{lgbm_update_params}()}
-}
-\concept{model_funs}

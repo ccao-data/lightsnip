@@ -27,11 +27,3 @@ lists), then inserting the matching values passed in \code{params}.
 
 This function will likely be deprecated by in the near future.
 }
-\seealso{
-Other model_funs: 
-\code{\link{axe_recipe}()},
-\code{\link{axe_tune_data}()},
-\code{\link{lgbm_load}()},
-\code{\link{lgbm_save}()}
-}
-\concept{model_funs}
