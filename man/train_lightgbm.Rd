@@ -10,13 +10,11 @@ train_lightgbm(
   num_iterations = 10,
   max_depth = 17,
   num_leaves = 31,
-  learning_rate = 0.1,
-  feature_fraction = 1,
-  min_data_in_leaf = 20,
-  min_gain_to_split = 0,
   link_max_depth = FALSE,
   add_to_linked_depth = 2L,
   categorical_feature = NULL,
+  validation = 0,
+  early_stop = NULL,
   max_bin = NULL,
   feature_pre_filter = FALSE,
   verbose = 0,
@@ -37,17 +35,6 @@ node.}
 \item{num_leaves}{Integer value for the maximum possible number of leaves
 in one tree.}
 
-\item{learning_rate}{A numeric value between zero and one to control
-the learning rate.}
-
-\item{feature_fraction}{Subsampling proportion of columns.}
-
-\item{min_data_in_leaf}{A numeric value for the minimum sum of instances
-needed in a child to continue to split.}
-
-\item{min_gain_to_split}{A number for the minimum loss reduction required
-to make a further partition on a leaf node of the tree.}
-
 \item{link_max_depth}{Logical, default FALSE. When TRUE, and when
 \code{max_depth} is unconstrained \code{-1}, then \code{max_depth} will
 be set to \code{floor(log2(num_leaves)) + link_max_depth_add}.}
@@ -57,6 +44,17 @@ is linked to \code{num_leaves}.}
 
 \item{categorical_feature}{A character vector of feature names or an
 integer vector with the indices of the features.}
+
+\item{validation}{A positive number. If on \code{[0, 1)}
+the value, \code{validation} is a random proportion of data
+in \code{x} and \code{y} that are used for performance assessment and
+potential early stopping. If 1 or greater, it is the _number_
+of training set samples use for these purposes.}
+
+\item{early_stop}{An integer or \code{NULL}. If not \code{NULL}, it is the
+number of training iterations without improvement before stopping.
+If \code{validation} is used, performance is base on the validation set;
+otherwise the training set is used.}
 
 \item{max_bin}{Max number of bins that feature values will be bucketed in.}
 
@@ -76,3 +74,4 @@ A fitted \code{lgb.Booster} object.
 Wrapper for \code{\link[lightgbm]{lgb.train}} tree-based models
 with some expanded/advanced options.
 }
+\keyword{internal}

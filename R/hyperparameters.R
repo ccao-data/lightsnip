@@ -1,3 +1,4 @@
+# nocov start
 #' LightGBM engine-specific hyperparameters
 #'
 #' @description Collection of hyperparameters specific to LightGBM. Each can be
@@ -260,3 +261,5 @@ cat_l2 <- function(range = c(-3, 2), trans = scales::log10_trans()) {
     finalize = NULL
   )
 }
+
+# nocov end

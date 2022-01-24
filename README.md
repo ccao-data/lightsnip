@@ -120,7 +120,12 @@ final <- model %>%
   tune::finalize_model(tune::select_best(search)) %>%
   parsnip::set_mode("regression") %>%
   parsnip::fit(mpg ~ ., bake(prep(rec), mtcars_train))
+```
 
+\[LightGBM\] \[Warning\] verbosity is set=-1, verbose=-1 will be
+ignored. Current value: verbosity=-1
+
+``` r
 # Predict on test set
 mtcars_test %>%
   mutate(pred = predict(final, bake(prep(rec), .))$.pred) %>%
@@ -130,7 +135,7 @@ mtcars_test %>%
 
 |                |  mpg |  pred |
 |:---------------|-----:|------:|
-| Ford Pantera L | 15.8 | 13.41 |
-| Ferrari Dino   | 19.7 | 20.55 |
-| Maserati Bora  | 15.0 | 13.82 |
-| Volvo 142E     | 21.4 | 22.87 |
+| Ford Pantera L | 15.8 | 13.34 |
+| Ferrari Dino   | 19.7 | 21.26 |
+| Maserati Bora  | 15.0 | 13.45 |
+| Volvo 142E     | 21.4 | 21.31 |

@@ -1,4 +1,4 @@
-context("test lightgbm")
+context("lightgbm regression")
 
 test_that("lightgbm regression", {
   model <- parsnip::boost_tree(trees = 50) %>%

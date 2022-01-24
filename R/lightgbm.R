@@ -1,3 +1,4 @@
+# nocov start
 #' Wrapper to add \code{lightgbm} engine to the parsnip \code{boost_tree} model
 #' specification. Gets called when the package loads
 #'
@@ -56,8 +57,19 @@ add_boost_tree_lightgbm <- function() {
     func = list(pkg = "dials", fun = "trees"),
     has_submodel = TRUE
   )
+
+  parsnip::set_model_arg(
+    model = "boost_tree",
+    eng = "lightgbm",
+    parsnip = "stop_iter",
+    original = "early_stop",
+    func = list(pkg = "dials", fun = "stop_iter"),
+    has_submodel = FALSE
+  )
 }
 
+
+# nocov end
 
 #' Boosted trees via LightGBM
 #'
@@ -72,13 +84,6 @@ add_boost_tree_lightgbm <- function() {
 #'   node.
 #' @param num_leaves Integer value for the maximum possible number of leaves
 #'   in one tree.
-#' @param learning_rate A numeric value between zero and one to control
-#'   the learning rate.
-#' @param feature_fraction Subsampling proportion of columns.
-#' @param min_data_in_leaf A numeric value for the minimum sum of instances
-#'   needed in a child to continue to split.
-#' @param min_gain_to_split A number for the minimum loss reduction required
-#'   to make a further partition on a leaf node of the tree.
 #' @param link_max_depth Logical, default FALSE. When TRUE, and when
 #'   \code{max_depth} is unconstrained \code{-1}, then \code{max_depth} will
 #'   be set to \code{floor(log2(num_leaves)) + link_max_depth_add}.
@@ -86,6 +91,15 @@ add_boost_tree_lightgbm <- function() {
 #'   is linked to \code{num_leaves}.
 #' @param categorical_feature A character vector of feature names or an
 #'   integer vector with the indices of the features.
+#' @param validation A positive number. If on \code{[0, 1)}
+#'   the value, \code{validation} is a random proportion of data
+#'   in \code{x} and \code{y} that are used for performance assessment and
+#'   potential early stopping. If 1 or greater, it is the _number_
+#'   of training set samples use for these purposes.
+#' @param early_stop An integer or \code{NULL}. If not \code{NULL}, it is the
+#'   number of training iterations without improvement before stopping.
+#'   If \code{validation} is used, performance is base on the validation set;
+#'   otherwise the training set is used.
 #' @param max_bin Max number of bins that feature values will be bucketed in.
 #' @param feature_pre_filter Tell LightGBM to ignore the features that are
 #'   unsplittable based on \code{min_data_in_leaf}.
@@ -95,19 +109,18 @@ add_boost_tree_lightgbm <- function() {
 #'   \code{\link[lightgbm]{lgb.train}}.
 #'
 #' @return A fitted \code{lgb.Booster} object.
+#' @keywords internal
 #' @export
 train_lightgbm <- function(x,
                            y,
                            num_iterations = 10,
                            max_depth = 17,
                            num_leaves = 31,
-                           learning_rate = 0.1,
-                           feature_fraction = 1,
-                           min_data_in_leaf = 20,
-                           min_gain_to_split = 0,
                            link_max_depth = FALSE,
                            add_to_linked_depth = 2L,
                            categorical_feature = NULL,
+                           validation = 0,
+                           early_stop = NULL,
                            max_bin = NULL,
                            feature_pre_filter = FALSE,
                            verbose = 0,
@@ -129,30 +142,44 @@ train_lightgbm <- function(x,
   )
   if (all(sapply(others[nthreads_args], is.null))) others$num_threads <- 1L
 
-  # If linked, set max_depth slightly higher than depth-first
-  if (link_max_depth & max_depth == -1L) {
-    max_depth <- floor(log2(num_leaves)) + add_to_linked_depth
+
+  ##### Early Stopping #####
+  if (!is.numeric(validation) || validation < 0 || validation >= 1) {
+    rlang::abort("`validation` should be on [0, 1).")
+  }
+  if (!is.null(early_stop)) {
+    if (early_stop <= 1) {
+      rlang::abort(
+        paste0("`early_stop` should be on [2, ",  num_iterations, ").")
+      )
+    } else if (early_stop >= num_iterations) {
+      early_stop <- num_iterations - 1
+      rlang::warn(
+        paste0("`early_stop` was reduced to ", early_stop, ".")
+      )
+    }
   }
 
-  if (is.null(num_leaves)) {
+
+  ##### Arguments #####
+  # If linked, set max_depth slightly higher than depth-first
+  if (link_max_depth && max_depth == -1L) {
+    max_depth <- floor(log2(num_leaves)) + add_to_linked_depth
+  }
+  if (is.null(num_leaves) && max_depth > 0) {
     num_leaves <- max(2^max_depth - 1, 2)
   }
 
   arg_list <- list(
-    num_iterations = num_iterations,
     max_depth = max_depth,
-    num_leaves = num_leaves,
-    learning_rate = learning_rate,
-    feature_fraction = feature_fraction,
-    min_data_in_leaf = min_data_in_leaf,
-    min_gain_to_split = min_gain_to_split
+    num_leaves = num_leaves
   )
 
   others <- others[!(names(others) %in% c("data", names(arg_list)))]
   arg_list <- purrr::compact(c(arg_list, others))
 
 
-  ##### Train #####
+  ##### Setup Data #####
   data_arg_list <- purrr::compact(list(
     feature_pre_filter = feature_pre_filter,
     max_bin = max_bin
@@ -165,9 +192,40 @@ train_lightgbm <- function(x,
     params = data_arg_list
   )
 
+  n <- nrow(x)
+  if (validation > 0) {
+    trn_index <- sample(1:n, size = floor(n * validation) + 1)
+    valids <- list(validation = lightgbm::lgb.Dataset(
+        data = as.matrix(x[-trn_index, ]),
+        label = y[-trn_index],
+        categorical_feature = categorical_feature,
+        params = data_arg_list
+      ))
+    d <- lightgbm::lgb.Dataset(
+      data = as.matrix(x[trn_index, ]),
+      label = y[trn_index],
+      categorical_feature = categorical_feature,
+      params = data_arg_list
+    )
+
+  } else {
+    d <- lightgbm::lgb.Dataset(
+      data = as.matrix(x),
+      label = y,
+      categorical_feature = categorical_feature,
+      params = data_arg_list
+    )
+    valids <- list(training = d)
+  }
+
+
+  ##### Train #####
   main_args <- list(
-    data = quote(d),
     params = arg_list,
+    data = quote(d),
+    nrounds = num_iterations,
+    valids = quote(valids),
+    early_stopping_rounds = early_stop,
     verbose = verbose
   )
 
