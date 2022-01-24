@@ -5,7 +5,7 @@ model <- parsnip::boost_tree() %>%
 
 # Test typical regression vars
 param_df <- tibble::tribble(
-  ~ "param", ~ "values",
+  ~"param", ~"values",
   "max_bin", c(2, 4, 100),
   "max_depth", c(3, 6, 17),
   "learning_rate", c(0.001, 0.01, 0.1),
@@ -86,7 +86,7 @@ test_that("lightgbm bagging", {
 
 # Test categorical-specific vars
 param_df_cat <- tibble::tribble(
-  ~ "param", ~ "values",
+  ~"param", ~"values",
   "min_data_per_group", c(1, 200),
   "max_cat_threshold", c(1, 100),
   "cat_smooth", c(0.01, 100),

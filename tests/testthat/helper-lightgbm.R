@@ -45,10 +45,10 @@ expect_categorical_vars_works <- function(model) {
   expect_equal(
     predict(
       adj,
-        recipes::bake(
-          recipes::prep(rec),
-          data.frame(x1 = factor(c("a", "b"), levels = c("a", "b")))
-        )
+      recipes::bake(
+        recipes::prep(rec),
+        data.frame(x1 = factor(c("a", "b"), levels = c("a", "b")))
+      )
     )$.pred,
     predict(
       adj,

@@ -135,7 +135,7 @@ train_lightgbm <- function(x,
   }
 
   if (is.null(num_leaves)) {
-    num_leaves <- max(2 ^ max_depth - 1, 2)
+    num_leaves <- max(2^max_depth - 1, 2)
   }
 
   arg_list <- list(
