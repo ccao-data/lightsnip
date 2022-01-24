@@ -4,6 +4,7 @@
 \alias{param_lgbm}
 \alias{max_bin}
 \alias{max_depth}
+\alias{add_to_linked_depth}
 \alias{learning_rate}
 \alias{feature_fraction}
 \alias{feature_fraction_bynode}
@@ -23,6 +24,8 @@
 max_bin(range = c(100L, 500L), trans = NULL)
 
 max_depth(range = c(3L, 17L), trans = NULL)
+
+add_to_linked_depth(range = c(1L, 3L), trans = NULL)
 
 learning_rate(range = c(-3, -0.5), trans = scales::log10_trans())
 
