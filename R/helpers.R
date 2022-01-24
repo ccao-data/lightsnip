@@ -75,7 +75,7 @@ lgbm_predict <- function(spec, recipe, data) {
 #' Save a parsnip model fit object with a LightGBM fit to disk. This is a
 #' a workaround to split the LightGBM model and parsnip specification into
 #' separate files and then zip them together. This is necessary because LightGBM
-#' models really do not like being saved with \code{saveRDS()}.
+#' models really do not like being saved with \code{\link{saveRDS}}.
 #'
 #' @param model A parsnip specification containing a fit LightGBM model.
 #' @param zipfile A path to save zip file to.
@@ -95,9 +95,9 @@ lgbm_save <- function(model, zipfile) {
 
 #' Load a LightGBM model from disk
 #'
-#' This is the paired function to \code{model_lgbm_save()}. It loads a zip file
-#' containing a parsnip specification and LightGBM model, then recombines them
-#' into a single object.
+#' This is the paired function to \code{\link{lgbm_save}}. It loads a zip
+#' file containing a parsnip specification and LightGBM model, then recombines
+#' them into a single object.
 #'
 #' @param zipfile A path to the zip file containing the saved model objects.
 #'

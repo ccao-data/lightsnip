@@ -15,5 +15,5 @@ lgbm_save(model, zipfile)
 Save a parsnip model fit object with a LightGBM fit to disk. This is a
 a workaround to split the LightGBM model and parsnip specification into
 separate files and then zip them together. This is necessary because LightGBM
-models really do not like being saved with \code{saveRDS()}.
+models really do not like being saved with \code{\link{saveRDS}}.
 }

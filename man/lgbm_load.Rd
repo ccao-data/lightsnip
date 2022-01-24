@@ -13,7 +13,7 @@ lgbm_load(zipfile)
 A parsnip model fit with LightGBM model.
 }
 \description{
-This is the paired function to \code{model_lgbm_save()}. It loads a zip file
-containing a parsnip specification and LightGBM model, then recombines them
-into a single object.
+This is the paired function to \code{\link{lgbm_save}}. It loads a zip
+file containing a parsnip specification and LightGBM model, then recombines
+them into a single object.
 }
