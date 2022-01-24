@@ -63,6 +63,7 @@ test_that("lightgbm add_to_linked_depth", {
     expect_regression_works(model)
     adj <- parsnip::fit(model, mpg ~ ., data = mtcars)
     predict(adj, mtcars)$.pred
+    expect_add_to_linked_depth_works(adj, x, y)
   })
   expect_all_preds_differ(preds)
 })
@@ -97,9 +98,8 @@ purrr::pwalk(param_df_cat, function(...) {
   hp <- list(...)
 
   test_that(paste("lightgbm", hp$param), {
-
     df <- data.frame(
-      x1 = as.factor(c("a", "b", sample(letters, 998, replace = TRUE))),
+      x1 = as.factor(sample(letters, 1000, replace = TRUE)),
       y = runif(1000)
     )
 

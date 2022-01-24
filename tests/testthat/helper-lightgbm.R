@@ -32,10 +32,22 @@ expect_categorical_vars_works <- function(model, df) {
   p <- predict(adj, recipes::bake(recipes::prep(rec), df))
   expect_true(length(unique(p$.pred)) <= length(unique(df$x1)))
 
-  # Error on unseen factors
+  # Error on incorrect input
   expect_error(
     predict(adj, data.frame(x1 = c("str", "str2"), stringsAsFactors = TRUE))
   )
+
+  # Unseen factor level becomes highest integer
+  unseen <- recipes::bake(
+    recipes::prep(rec),
+    data.frame(x1 = as.factor(c(letters, "unseen_level")))
+  )
+  expect_equal(unseen$x1[27], 26)
+
+  # Unseen prediction not equal to any of seen
+  # https://github.com/microsoft/LightGBM/issues/804
+  p2 <- predict(adj, unseen)$.pred
+  expect_true(all(purrr::map_lgl(p2[1:26], ~ .x != p2[27])))
 
   # Cat vars should be in model dump
   info <- jsonlite::fromJSON(lightgbm::lgb.dump(adj$fit))
@@ -117,6 +129,16 @@ expect_all_preds_differ <- function(preds) {
     purrr::map2_lgl(gr$x, gr$y, ~ isTRUE(all.equal(preds[[.x]], preds[[.y]])))
   )
   expect_false(predictions_differ)
+}
+
+expect_add_to_linked_depth_works <- function(fit,
+                                             num_leaves,
+                                             add_to_linked_depth) {
+  f <- tempfile()
+  lightgbm::lgb.save(fit$fit, f)
+  depth <- grep("max_depth.{2}[0-9]{1}", readLines(f), value = TRUE)
+  depth_num <- as.numeric(gsub("\\D", "", depth))
+  expect_equal(floor(log2(num_leaves)) + add_to_linked_depth, depth_num)
 }
 
 # nolint end
