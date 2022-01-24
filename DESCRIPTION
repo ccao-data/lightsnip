@@ -32,7 +32,6 @@ Suggests:
     lintr,
     pkgdown,
     readr,
-    scales,
     jsonlite, 
     rsample, 
     tidyr, 
