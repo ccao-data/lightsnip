@@ -42,7 +42,7 @@ remotes::install_gitlab(
 - Added LightGBM-specific hyperparameter functions
 - Added model save/load helpers
 - Added recipe/fit cleaning helpers
-- Force user to specify categorical columns by name, does _not_ implicitly convert things to categoricals
+- Force user to specify categorical columns by name, does _not_ implicitly convert factors to categoricals
 - Added early stopping from xgboost
 - Added more unit tests
 - Fixed a number of bugs
