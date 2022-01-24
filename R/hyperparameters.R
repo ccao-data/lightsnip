@@ -195,13 +195,13 @@ min_data_per_group <- function(range = c(20L, 250L), trans = NULL) {
 
 #' @rdname param_lgbm
 #' @export
-max_cat_theshold <- function(range = c(20L, 250L), trans = NULL) {
+max_cat_threshold <- function(range = c(20L, 250L), trans = NULL) {
   dials::new_quant_param(
     type = "integer",
     range = range,
     inclusive = c(TRUE, TRUE),
     trans = trans,
-    label = c(max_cat_theshold = "Max # of Split Points per Categorical Group"),
+    label = c(max_cat_threshold = "Max # of Split Points per Categorical Group"),
     finalize = NULL
   )
 }

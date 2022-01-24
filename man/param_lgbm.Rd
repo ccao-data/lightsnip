@@ -14,7 +14,7 @@
 \alias{bagging_fraction}
 \alias{bagging_freq}
 \alias{min_data_per_group}
-\alias{max_cat_theshold}
+\alias{max_cat_threshold}
 \alias{lambda_l1}
 \alias{lambda_l2}
 \alias{cat_smooth}
@@ -45,7 +45,7 @@ bagging_freq(range = c(1L, 100L), trans = NULL)
 
 min_data_per_group(range = c(20L, 250L), trans = NULL)
 
-max_cat_theshold(range = c(20L, 250L), trans = NULL)
+max_cat_threshold(range = c(20L, 250L), trans = NULL)
 
 lambda_l1(range = c(-3, 2), trans = scales::log10_trans())
 
