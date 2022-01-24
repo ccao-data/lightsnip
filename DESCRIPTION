@@ -17,11 +17,8 @@ Imports:
     lightgbm,
     parsnip (>= 0.1.4),
     purrr,
-    recipes,
     rlang,
-    scales,
     stats,
-    tibble,
     zip
 Suggests: 
     covr,
@@ -33,7 +30,10 @@ Suggests:
     pkgdown,
     readr,
     jsonlite, 
+    recipes,
     rsample, 
+    scales,
+    tibble,
     tidyr, 
     tune, 
     workflows,
