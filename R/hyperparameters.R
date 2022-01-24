@@ -201,7 +201,7 @@ max_cat_threshold <- function(range = c(20L, 250L), trans = NULL) {
     range = range,
     inclusive = c(TRUE, TRUE),
     trans = trans,
-    label = c(max_cat_threshold = "Max # of Split Points per Categorical Group"),
+    label = c(max_cat_threshold = "Max # of Splits per Categorical Group"),
     finalize = NULL
   )
 }

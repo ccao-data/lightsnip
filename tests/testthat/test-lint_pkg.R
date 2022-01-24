@@ -3,7 +3,8 @@ context("lintr coverage")
 test_that("no lintr errors", {
   lintr::expect_lint_free(
     linters = lintr::with_defaults(
-      cyclocomp_linter = lintr::cyclocomp_linter(30)
+      cyclocomp_linter = lintr::cyclocomp_linter(30),
+      snake_case_linter = NULL
     )
   )
 })

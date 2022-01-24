@@ -9,7 +9,6 @@ Description: Provides an expanded LightGBM engine for the parsnip package.
 URL: https://ccao-data-science---modeling.gitlab.io/packages/lightsnip/, https://gitlab.com/ccao-data-science---modeling/packages/lightsnip 
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
-LazyData: true
 Imports: 
     butcher,
     dials,
@@ -19,6 +18,7 @@ Imports:
     purrr,
     rlang,
     stats,
+    tibble,
     zip
 Suggests: 
     covr,
@@ -33,7 +33,6 @@ Suggests:
     recipes,
     rsample, 
     scales,
-    tibble,
     tidyr, 
     tune, 
     workflows,

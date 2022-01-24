@@ -251,3 +251,56 @@ pred_lgb_reg_num <- function(object, new_data, ...) {
     params = list(predict_disable_shape_check = TRUE), ...
   )
 }
+
+# nolint start
+#' Model predictions across many sub-models
+#'
+#' For some models, predictions can be made on sub-models in the model object.
+#'
+#' @param object A model_fit object.
+#' @param ... Optional arguments to pass to predict.model_fit(type = "raw")
+#'   such as type.
+#' @param new_data A rectangular data object, such as a data frame.
+#' @param type A single character value or NULL. Possible values are
+#'   "numeric", "class", "prob", "conf_int", "pred_int", "quantile", or "raw".
+#'   When NULL, \code{predict()} will choose an appropriate value based on the
+#'   model's mode.
+#' @param trees An integer vector for the number of trees in the ensemble.
+#'
+#' @export
+#' @importFrom purrr map_df
+#' @importFrom parsnip multi_predict
+multi_predict._lgb.Booster <- function(object,
+                                       new_data,
+                                       type = NULL,
+                                       trees = NULL,
+                                       ...) {
+  if (any(names(rlang::enquos(...)) == "newdata")) {
+    rlang::abort("Did you mean to use `new_data` instead of `newdata`?")
+  }
+
+  # nolint end
+  trees <- sort(trees)
+  res <- purrr::map_df(
+    trees,
+    lightgbm_by_tree,
+    object = object,
+    new_data = new_data,
+    type = type
+  )
+  res <- dplyr::arrange(res, .row, trees)
+  res <- split(res[, -1], res$.row)
+  names(res) <- NULL
+
+  tibble::tibble(.pred = res)
+}
+
+
+lightgbm_by_tree <- function(tree, object, new_data, type = NULL) {
+  pred <- pred_lgb_reg_num(object, new_data, num_iteration = tree)
+  pred <- tibble::tibble(.pred = pred)
+  nms <- names(pred)
+  pred[["trees"]] <- tree
+  pred[[".row"]] <- seq_len(nrow(new_data))
+  pred[, c(".row", "trees", nms)]
+}
