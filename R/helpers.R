@@ -70,36 +70,6 @@ lgbm_predict <- function(spec, recipe, data) {
 }
 
 
-#' Finalize workflow objects for LightGBM models
-#'
-#' @description LightGBM is currently not natively supported by Tidymodels.
-#' As such, functions such as \code{\link[tune]{finalize_workflow}}, which is
-#' usually responsible for passing final hyperparameters from cross-validation
-#' into a workflow object, do not function correctly.
-#'
-#' This function is a hacky workaround which inserts parameters directly into
-#' the workflow object by looking for their names (workflows are just nested
-#' lists), then inserting the matching values passed in \code{params}.
-#'
-#' This function will likely be deprecated by in the near future.
-#'
-#' @param wflow A workflow object created by \code{\link[workflows]{workflow}}.
-#'
-#' @param params A dataframe or named list of parameters. Usually created by
-#'   \code{\link[tune]{select_best}}.
-#'
-#' @return A finalized workflow object with updated parameters.
-#'
-#' @export
-lgbm_update_params <- function(wflow, params) {
-  wflow$fit$actions$model$spec <- purrr::list_modify(
-    wflow$fit$actions$model$spec,
-    as.list(dplyr::select(params, -dplyr::any_of(".config")))
-  )
-  return(wflow)
-}
-
-
 #' Save a LightGBM model to disk
 #'
 #' Save a parsnip model fit object with a LightGBM fit to disk. This is a

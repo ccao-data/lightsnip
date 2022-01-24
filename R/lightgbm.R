@@ -7,6 +7,7 @@
 add_boost_tree_lightgbm <- function() {
   parsnip::set_model_engine("boost_tree", mode = "regression", eng = "lightgbm")
   parsnip::set_dependency("boost_tree", eng = "lightgbm", pkg = "lightgbm")
+  parsnip::set_dependency("boost_tree", eng = "lightgbm", pkg = "lightsnip")
 
   parsnip::set_fit(
     model = "boost_tree",
