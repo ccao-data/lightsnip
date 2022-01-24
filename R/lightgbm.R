@@ -3,7 +3,6 @@
 #'
 #' @return NULL
 #' @noRd
-#' @export
 add_boost_tree_lightgbm <- function() {
   parsnip::set_model_engine("boost_tree", mode = "regression", eng = "lightgbm")
   parsnip::set_dependency("boost_tree", eng = "lightgbm", pkg = "lightgbm")
@@ -139,7 +138,6 @@ prepare_df_lgbm <- function(x, y = NULL) {
 #'
 #' @return A fitted \code{lgb.Booster} object.
 #' @noRd
-#' @export
 train_lightgbm <- function(x,
                            y,
                            max_depth = 17,
@@ -237,7 +235,6 @@ train_lightgbm <- function(x,
 #'   of the lgb.Booster object passed to object.
 #'
 #' @noRd
-#' @export
 pred_lgb_reg_num <- function(object, new_data, ...) {
   stats::predict(object$fit, prepare_df_lgbm(new_data),
     reshape = TRUE,

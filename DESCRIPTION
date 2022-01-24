@@ -12,6 +12,7 @@ Encoding: UTF-8
 LazyData: true
 Imports: 
     butcher,
+    dials,
     dplyr,
     lightgbm,
     parsnip (>= 0.1.4),
