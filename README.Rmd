@@ -1,37 +1,43 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
 # Lightsnip package <a href='https://gitlab.com/ccao-data-science---modeling/packages/lightsnip'><img src='man/figures/logo.png' align="right" height="139" /></a>
 
-Lightsnip is a hard fork of
-[curso-r/treesnip](https://github.com/curso-r/treesnip). It adds
-LightGBM bindings for parsnip and enables more advanced LightGBM
-features, such as early stopping. It is not intended for general use,
-only as a dependency for CCAO regression models.
+Lightsnip is a hard fork of [curso-r/treesnip](https://github.com/curso-r/treesnip). It adds LightGBM bindings for parsnip and enables more advanced LightGBM features, such as early stopping. It is not intended for general use, only as a dependency for CCAO regression models.
 
-For detailed documentation on included functions, [**visit the full
-reference
+For detailed documentation on included functions, [**visit the
+full reference
 list**](https://ccao-data-science---modeling.gitlab.io/packages/lightsnip/reference/).
 
 ## Installation
 
-You can install the released version of `lightsnip` directly from GitLab
-by running the following R command after installing
-[remotes](https://github.com/r-lib/remotes):
+You can install the released version of `lightsnip` directly from GitLab by running the following R command after installing [remotes](https://github.com/r-lib/remotes):
 
-``` r
+```{r, eval=FALSE}
 remotes::install_gitlab("ccao-data-science---modeling/packages/lightsnip")
 ```
 
-Occasionally, when using brand-new or source versions of packages,
-installation [on Windows will fail with the following
-error](https://github.com/rstudio/renv/issues/162):
+Occasionally, when using brand-new or source versions of packages, installation [on Windows will fail with the following error](https://github.com/rstudio/renv/issues/162):
 
-    DLL 'package_name' not found: maybe not installed for this architecture?
+```
+DLL 'package_name' not found: maybe not installed for this architecture?
+```
 
 If this happens, try using the following installation command:
 
-``` r
+```{r, eval=FALSE}
 remotes::install_gitlab(
   repo = "ccao-data-science---modeling/packages/lightsnip",
   INSTALL_opts = "--no-multiarch"
@@ -40,26 +46,24 @@ remotes::install_gitlab(
 
 ## Differences compared to [treesnip](https://github.com/curso-r/treesnip)
 
--   Removed support for `tree` and `catboost` (LightGBM only)
--   Removed classification support for LightGBM (regression only)
--   Removed treesnip caps and warnings on `max_depth`, other parameters
--   Removed vignettes and samples
--   Remap parameters to engine args instead of parsnip model args
--   Added LightGBM-specific hyperparameter functions
--   Added LightGBM-specific save/load helpers
--   Added recipe/fit cleaning helpers
--   Force user to specify categorical columns by name, does *not*
-    implicitly convert factors to categoricals
--   Added early stopping from xgboost
--   Added more unit tests
--   Fixed a number of bugs
+- Removed support for `tree` and `catboost` (LightGBM only)
+- Removed classification support for LightGBM (regression only)
+- Removed treesnip caps and warnings on `max_depth`, other parameters
+- Removed vignettes and samples
+- Remap parameters to engine args instead of parsnip model args
+- Added LightGBM-specific hyperparameter functions
+- Added LightGBM-specific save/load helpers
+- Added recipe/fit cleaning helpers
+- Force user to specify categorical columns by name, does _not_ implicitly convert factors to categoricals
+- Added early stopping from xgboost
+- Added more unit tests
+- Fixed a number of bugs
 
 ## Basic usage with Tidymodels
 
-Here is a quick example using `lightsnip` with a Tidymodels
-cross-validation workflow:
+Here is a quick example using `lightsnip` with a Tidymodels cross-validation workflow: 
 
-``` r
+```{r message=FALSE, results='asis'}
 library(dplyr)
 library(lightgbm)
 library(lightsnip)
@@ -126,11 +130,5 @@ mtcars_test %>%
   mutate(pred = predict(final, bake(prep(rec), .))$.pred) %>%
   select(mpg, pred) %>%
   knitr::kable(digits = 2)
-```
 
-|                |  mpg |  pred |
-|:---------------|-----:|------:|
-| Ford Pantera L | 15.8 | 13.41 |
-| Ferrari Dino   | 19.7 | 20.55 |
-| Maserati Bora  | 15.0 | 13.82 |
-| Volvo 142E     | 21.4 | 22.87 |
+```
