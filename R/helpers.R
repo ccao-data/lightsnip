@@ -45,31 +45,6 @@ axe_recipe <- function(x) {
 }
 
 
-#' Predict values using a trained model and recipe
-#'
-#' @description Simple helper function to return predictions from a new data set
-#' given a parsnip specification and recipe. Will exponentiate predictions by
-#' default.
-#'
-#' @param spec A parsnip model specification object. Must be trained.
-#' @param recipe A prepped recipe object. Must be trained.
-#' @param data New data to get predictions from. Will be pre-processed by the
-#'   specified \code{recipe}.
-#'
-#' @return A vector of predictions from the model given the data and recipe
-#'   specified.
-#'
-#' @export
-lgbm_predict <- function(spec, recipe, data) {
-  pred <- parsnip::predict.model_fit(
-    object = spec,
-    new_data = recipes::bake(recipe, data, recipes::all_predictors())
-  )$.pred
-
-  return(pred)
-}
-
-
 #' Save a LightGBM model to disk
 #'
 #' Save a parsnip model fit object with a LightGBM fit to disk. This is a

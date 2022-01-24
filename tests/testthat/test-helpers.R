@@ -78,11 +78,17 @@ adj <- parsnip::fit(
 
 test_that("prediction outputs as expected", {
   expect_type(
-    lgbm_predict(adj, recipes::prep(attrition_recp), attrition[1:100, ]),
+    predict(
+      adj,
+      recipes::bake(recipes::prep(attrition_recp), attrition[1:100, ])
+    )$.pred,
     "double"
   )
   expect_length(
-    lgbm_predict(adj, recipes::prep(attrition_recp), attrition[1:100, ]),
+    predict(
+      adj,
+      recipes::bake(recipes::prep(attrition_recp), attrition[1:100, ])
+    )$.pred,
     100
   )
 })
@@ -104,11 +110,13 @@ test_that("model can be saved and loaded", {
 
   reloaded <- lgbm_load(file)
 
-  out <- lgbm_predict(
+  out <- predict(
     reloaded,
-    recipes::prep(attrition_recp),
-    attrition[50:100, ]
-  )
+    recipes::bake(
+      recipes::prep(attrition_recp),
+      attrition[50:100, ]
+    )
+  )$.pred
 
   expect_type(out, "double")
   expect_length(out, 51)

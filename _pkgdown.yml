@@ -16,6 +16,5 @@ reference:
 - contents:
   - axe_recipe
   - axe_tune_data
-  - lgbm_predict
   - lgbm_load
   - lgbm_save

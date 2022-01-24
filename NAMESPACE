@@ -3,5 +3,4 @@
 export(axe_recipe)
 export(axe_tune_data)
 export(lgbm_load)
-export(lgbm_predict)
 export(lgbm_save)
