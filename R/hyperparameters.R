@@ -1,4 +1,3 @@
-# nocov start
 #' LightGBM engine-specific hyperparameters
 #'
 #' @description Collection of hyperparameters specific to LightGBM. Each can be
@@ -47,6 +46,20 @@ max_depth <- function(range = c(3L, 17L), trans = NULL) {
     inclusive = c(TRUE, TRUE),
     trans = trans,
     label = c(max_depth = "Max Tree Depth"),
+    finalize = NULL
+  )
+}
+
+
+#' @rdname param_lgbm
+#' @export
+add_to_linked_depth <- function(range = c(1L, 3L), trans = NULL) {
+  dials::new_quant_param(
+    type = "integer",
+    range = range,
+    inclusive = c(TRUE, TRUE),
+    trans = trans,
+    label = c(max_depth = "Add to floor(log2(num_leaves))"),
     finalize = NULL
   )
 }
@@ -247,5 +260,3 @@ cat_l2 <- function(range = c(-3, 2), trans = scales::log10_trans()) {
     finalize = NULL
   )
 }
-
-# nocov end

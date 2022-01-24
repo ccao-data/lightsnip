@@ -9,6 +9,10 @@ reference:
     This package includes parsnip bindings and functions which add lightgbm
     to the parsnip `boost_tree()` model. These bindings load when the package
     loads.
+- contents:
+  - add_boost_tree_lightgbm
+  - train_lightgbm
+  - pred_lgb_reg_num
 - subtitle: LightGBM hyperparameters
   desc:: >
     LightGBM dials:: paramter functions that can be used with tune_ functions.
