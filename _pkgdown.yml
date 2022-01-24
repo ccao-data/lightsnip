@@ -9,6 +9,12 @@ reference:
     This package includes parsnip bindings and functions which add lightgbm
     to the parsnip `boost_tree()` model. These bindings load when the package
     loads.
+- subtitle: LightGBM hyperparameters
+  desc:: >
+    LightGBM dials:: paramter functions that can be used with tune_ functions.
+    Pass them to set_engine to use.
+- contents:
+  - param_lgbm
 - subtitle: Tidymodels helpers
   desc: >
     Utility functions for common Tidymodels tasks, such as predicting on new
