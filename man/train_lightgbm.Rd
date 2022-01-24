@@ -73,6 +73,6 @@ unsplittable based on \code{min_data_in_leaf}.}
 A fitted \code{lgb.Booster} object.
 }
 \description{
-\code{\link{lightgbm_train}} is a wrapper for
- \code{\link[lightgbm]{lgb.train}} tree-based models.
+Wrapper for \code{\link[lightgbm]{lgb.train}} tree-based models
+with some expanded/advanced options.
 }

@@ -22,7 +22,12 @@ test_that("lightgbm with categoricals", {
     ) %>%
     parsnip::set_mode("regression")
 
-  expect_categorical_vars_works(model)
+  df <- data.frame(
+    x1 = as.factor(c("a", "b", sample(letters, 998, replace = TRUE))),
+    y = runif(1000)
+  )
+
+  expect_categorical_vars_works(model, df)
 })
 
 test_that("lightgbm alternate objective", {

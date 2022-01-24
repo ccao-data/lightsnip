@@ -87,9 +87,9 @@ test_that("lightgbm bagging", {
 # Test categorical-specific vars
 param_df_cat <- tibble::tribble(
   ~"param", ~"values",
-  "min_data_per_group", c(1, 200),
-  "max_cat_threshold", c(1, 100),
-  "cat_smooth", c(0.01, 100),
+  "min_data_per_group", c(1, 50),
+  "max_cat_threshold", c(5, 20),
+  "cat_smooth", c(0.01, 10),
   "cat_l2", c(0.1, 100)
 )
 
@@ -97,25 +97,21 @@ purrr::pwalk(param_df_cat, function(...) {
   hp <- list(...)
 
   test_that(paste("lightgbm", hp$param), {
+
+    df <- data.frame(
+      x1 = as.factor(c("a", "b", sample(letters, 998, replace = TRUE))),
+      y = runif(1000)
+    )
+
     preds <- purrr::map2(hp$param, hp$values, function(x, y) {
       model <- model %>%
         parsnip::set_engine(
-          engine = "lightgbm", verbose = -1, min_data_in_leaf = 1,
-          {{ x }} := y, categorical_feature = "x1"
+          engine = "lightgbm", verbose = -1L, min_data_in_leaf = 1,
+          {{ x }} := y,
+          categorical_feature = "x1",
+          seed = 27, deterministic = TRUE
         )
-      expect_categorical_vars_works(model)
-
-      df <- data.frame(
-        x1 = as.factor(c("a", "b", sample(letters[1:5], 998, replace = TRUE))),
-        y = runif(1000)
-      )
-      rec <- recipes::recipe(y ~ ., df) %>%
-        recipes::step_integer(recipes::all_nominal(), zero_based = TRUE)
-      adj <- parsnip::fit(
-        model, y ~ .,
-        data = recipes::bake(recipes::prep(rec), df)
-      )
-      predict(adj, recipes::bake(recipes::prep(rec), df))$.pred
+      expect_categorical_vars_works(model, df)
     })
     expect_all_preds_differ(preds)
   })

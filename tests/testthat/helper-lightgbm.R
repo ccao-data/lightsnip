@@ -20,12 +20,7 @@ expect_regression_works <- function(model) {
   expect_equal(predict(mod, mtcars), pred)
 }
 
-expect_categorical_vars_works <- function(model) {
-  df <- data.frame(
-    x1 = as.factor(c("a", "b", sample(letters, 998, replace = TRUE))),
-    y = runif(1000)
-  )
-
+expect_categorical_vars_works <- function(model, df) {
   rec <- recipes::recipe(y ~ ., df) %>%
     recipes::step_integer(recipes::all_nominal(), zero_based = TRUE)
 
@@ -35,12 +30,16 @@ expect_categorical_vars_works <- function(model) {
   )
 
   p <- predict(adj, recipes::bake(recipes::prep(rec), df))
-
   expect_true(length(unique(p$.pred)) <= length(unique(df$x1)))
 
+  # Error on unseen factors
   expect_error(
-    predict(adj, data.frame(x1 = c("str", "str2"), stringsAsFactors = FALSE))
+    predict(adj, data.frame(x1 = c("str", "str2"), stringsAsFactors = TRUE))
   )
+
+  # Cat vars should be in model dump
+  info <- jsonlite::fromJSON(lightgbm::lgb.dump(adj$fit))
+  expect_gt(sum(info$tree_info$num_cat), 0.0)
 
   expect_equal(
     predict(

@@ -61,8 +61,8 @@ add_boost_tree_lightgbm <- function() {
 
 #' Boosted trees via LightGBM
 #'
-#' @description \code{\link{lightgbm_train}} is a wrapper for
-#'  \code{\link[lightgbm]{lgb.train}} tree-based models.
+#' @description Wrapper for \code{\link[lightgbm]{lgb.train}} tree-based models
+#' with some expanded/advanced options.
 #'
 #' @param x A matrix of predictors.
 #' @param y A numeric vector of outcome data.
