@@ -1,99 +1,64 @@
-test_that("lightgbm", {
-  model <- parsnip::boost_tree(mtry = 1, trees = 50, tree_depth = 15, min_n = 1)
+context("test lightgbm")
 
-  expect_all_modes_works(model, "lightgbm")
+test_that("lightgbm regression", {
+  model <- parsnip::boost_tree(trees = 50) %>%
+    parsnip::set_engine(
+      engine = "lightgbm",
+      objective = "regression", verbose = -1, verbosity = -1,
+      max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1
+    ) %>%
+    parsnip::set_mode("regression")
+
+  expect_regression_works(model)
 })
 
+test_that("lightgbm with categoricals", {
+  model <- parsnip::boost_tree(trees = 50) %>%
+    parsnip::set_engine(
+      engine = "lightgbm",
+      objective = "regression", verbose = -1,
+      max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1,
+      categorical_feature = "x1"
+    ) %>%
+    parsnip::set_mode("regression")
+
+  expect_categorical_vars_works(model)
+})
 
 test_that("lightgbm alternate objective", {
   skip_if_not_installed("lightgbm")
 
-  spec <- parsnip::boost_tree(
-    mtry = 1, trees = 50, tree_depth = 15, min_n = 1
-  ) %>%
-    parsnip::set_engine("lightgbm", objective = "huber") %>%
+  spec <- parsnip::boost_tree(trees = 50) %>%
+    parsnip::set_engine(
+      engine = "lightgbm",
+      objective = "huber", verbose = -1,
+      max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1
+    ) %>%
     parsnip::set_mode("regression")
 
   lgb_fit <- spec %>% parsnip::fit(mpg ~ ., data = mtcars)
+
+  predict(lgb_fit, mtcars[, -1])
 
   info <- jsonlite::fromJSON(lightgbm::lgb.dump(lgb_fit$fit))
 
   expect_equal(info$objective, "huber")
 })
 
+context("test tune")
+
 test_that("lightgbm with tune", {
   model <- parsnip::boost_tree(
-    mtry = 5,
-    learn_rate = tune::tune(),
-    loss_reduction = tune::tune(),
-    sample_size = tune::tune(),
-    trees = tune::tune(),
-    min_n = tune::tune(),
-    tree_depth = tune::tune()
-  )
-  model <- parsnip::set_engine(model, "lightgbm")
+    trees = tune::tune()
+  ) %>%
+    parsnip::set_engine(
+      engine = "lightgbm", verbose = -1,
+      learning_rate = tune::tune(),
+      min_gain_to_split = tune::tune(),
+      feature_fraction = tune::tune(),
+      min_data_in_leaf = tune::tune(),
+      max_depth = tune::tune()
+    )
 
   expect_can_tune_boost_tree(model)
-})
-
-
-test_that("lightgbm mtry", {
-  hyperparameters <- data.frame(mtry = c(1, 2, 6))
-  for (i in seq_len(nrow(hyperparameters))) {
-    model <- parsnip::boost_tree(
-      mtry = hyperparameters$mtry[i], min_n = 1
-    )
-    expect_all_modes_works(model, "lightgbm")
-  }
-})
-
-test_that("lightgbm trees", {
-  hyperparameters <- data.frame(trees = c(1, 20, 50))
-  for (i in seq_len(nrow(hyperparameters))) {
-    model <- parsnip::boost_tree(
-      trees = hyperparameters$trees[i], min_n = 1
-    )
-    expect_all_modes_works(model, "lightgbm")
-  }
-})
-
-
-test_that("lightgbm min_n hyperparameter", {
-  hyperparameters <- data.frame(min_n = c(1, 10))
-  for (i in seq_len(nrow(hyperparameters))) {
-    model <- parsnip::boost_tree(
-      min_n = hyperparameters$min_n[i]
-    )
-    expect_all_modes_works(model, "lightgbm")
-  }
-})
-
-test_that("lightgbm tree_depth", {
-  hyperparameters <- data.frame(tree_depth = c(1, 16))
-  for (i in seq_len(nrow(hyperparameters))) {
-    model <- parsnip::boost_tree(
-      tree_depth = hyperparameters$tree_depth[i], min_n = 1
-    )
-    expect_all_modes_works(model, "lightgbm")
-  }
-})
-
-test_that("lightgbm loss_reduction", {
-  hyperparameters <- data.frame(loss_reduction = c(0, 0.2, 2))
-  for (i in seq_len(nrow(hyperparameters))) {
-    model <- parsnip::boost_tree(
-      loss_reduction = hyperparameters$loss_reduction[i], min_n = 1
-    )
-    expect_all_modes_works(model, "lightgbm")
-  }
-})
-
-test_that("lightgbm tree_depth", {
-  hyperparameters <- data.frame(loss_reduction = c(0, 0.2, 2))
-  for (i in seq_len(nrow(hyperparameters))) {
-    model <- parsnip::boost_tree(
-      loss_reduction = hyperparameters$loss_reduction[i], min_n = 1
-    )
-    expect_all_modes_works(model, "lightgbm")
-  }
 })

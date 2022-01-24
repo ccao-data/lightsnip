@@ -43,9 +43,9 @@ test_that("invalid data types stop process", {
 })
 
 
-context("test lgbm_predict()")
+context("test lgbm_save() and lgbm_load()")
 
-##### TEST lgbm_predict() #####
+##### TEST lgbm_save() and lgbm_load() #####
 
 library(modeldata)
 
@@ -66,10 +66,14 @@ attrition_recp <-
     StockOptionLevel,
     transform = function(x) x + 1,
     levels = amnt
-  )
+  ) %>%
+  recipes::step_integer(recipes::all_nominal(), zero_based = TRUE)
 
 # Train model
-attrition_baked <- recipes::bake(recipes::prep(attrition_recp), attrition)
+attrition_baked <- recipes::bake(
+  recipes::prep(attrition_recp),
+  attrition
+)
 adj <- parsnip::fit(
   model,
   HourlyRate ~ StockOptionLevel + TotalWorkingYears,
@@ -92,11 +96,6 @@ test_that("prediction outputs as expected", {
     100
   )
 })
-
-
-context("test lgbm_save() and lgbm_load()")
-
-##### TEST lgbm_save() and lgbm_load() #####
 
 lgbm_workflow <- workflows::workflow(attrition_recp, model)
 lgbm_workflow_fit <- lgbm_workflow %>%
