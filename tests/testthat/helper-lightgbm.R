@@ -44,10 +44,10 @@ expect_categorical_vars_works <- function(model, df) {
   )
   expect_equal(unseen$x1[27], 26)
 
-  # Unseen prediction not equal to any of seen
+  # Unseen prediction is numeric
   # https://github.com/microsoft/LightGBM/issues/804
   p2 <- predict(adj, unseen)$.pred
-  expect_true(all(purrr::map_lgl(p2[1:26], ~ .x != p2[27])))
+  expect_type(p2[27], "double")
 
   # Cat vars should be in model dump
   info <- jsonlite::fromJSON(lightgbm::lgb.dump(adj$fit))
