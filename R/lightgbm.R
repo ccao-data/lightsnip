@@ -2,7 +2,7 @@
 #' specification. Gets called when the package loads
 #'
 #' @return NULL
-#' @noRd
+#' @export
 add_boost_tree_lightgbm <- function() {
   parsnip::set_model_engine("boost_tree", mode = "regression", eng = "lightgbm")
   parsnip::set_dependency("boost_tree", eng = "lightgbm", pkg = "lightgbm")
@@ -48,16 +48,6 @@ add_boost_tree_lightgbm <- function() {
     )
   )
 
-
-  ##### Model args #####
-  parsnip::set_model_arg(
-    model = "boost_tree",
-    eng = "lightgbm",
-    parsnip = "tree_depth",
-    original = "max_depth",
-    func = list(pkg = "dials", fun = "tree_depth"),
-    has_submodel = FALSE
-  )
   parsnip::set_model_arg(
     model = "boost_tree",
     eng = "lightgbm",
@@ -66,54 +56,6 @@ add_boost_tree_lightgbm <- function() {
     func = list(pkg = "dials", fun = "trees"),
     has_submodel = TRUE
   )
-  parsnip::set_model_arg(
-    model = "boost_tree",
-    eng = "lightgbm",
-    parsnip = "learn_rate",
-    original = "learning_rate",
-    func = list(pkg = "dials", fun = "learn_rate"),
-    has_submodel = FALSE
-  )
-  parsnip::set_model_arg(
-    model = "boost_tree",
-    eng = "lightgbm",
-    parsnip = "mtry",
-    original = "feature_fraction",
-    func = list(pkg = "dials", fun = "mtry"),
-    has_submodel = FALSE
-  )
-  parsnip::set_model_arg(
-    model = "boost_tree",
-    eng = "lightgbm",
-    parsnip = "min_n",
-    original = "min_data_in_leaf",
-    func = list(pkg = "dials", fun = "min_n"),
-    has_submodel = FALSE
-  )
-  parsnip::set_model_arg(
-    model = "boost_tree",
-    eng = "lightgbm",
-    parsnip = "loss_reduction",
-    original = "min_gain_to_split",
-    func = list(pkg = "dials", fun = "loss_reduction"),
-    has_submodel = FALSE
-  )
-  parsnip::set_model_arg(
-    model = "boost_tree",
-    eng = "lightgbm",
-    parsnip = "sample_prop",
-    original = "bagging_fraction",
-    func = list(pkg = "dials", fun = "sample_prop"),
-    has_submodel = FALSE
-  )
-}
-
-
-prepare_df_lgbm <- function(x, y = NULL) {
-  categorical_cols <- categorical_columns(x)
-  x <- categorical_features_to_int(x, categorical_cols)
-  x <- as.matrix(x)
-  return(x)
 }
 
 
@@ -122,100 +64,111 @@ prepare_df_lgbm <- function(x, y = NULL) {
 #' @description \code{\link{lightgbm_train}} is a wrapper for
 #'  \code{\link[lightgbm]{lgb.train}} tree-based models.
 #'
-#' @param x A data frame or matrix of predictors.
+#' @param x A matrix of predictors.
 #' @param y A numeric vector of outcome data.
-#' @param max_depth An integer for the maximum depth of the tree.
-#' @param num_iterations An integer for the number of boosting iterations.
+#' @param num_iterations Integer value for the number of iterations (trees)
+#'   to grow.
+#' @param max_depth Integer value for the maximum leaf distance from the root
+#'   node.
+#' @param num_leaves Integer value for the maximum possible number of leaves
+#'   in one tree.
 #' @param learning_rate A numeric value between zero and one to control
 #'   the learning rate.
 #' @param feature_fraction Subsampling proportion of columns.
 #' @param min_data_in_leaf A numeric value for the minimum sum of instances
-#'  needed in a child to continue to split.
+#'   needed in a child to continue to split.
 #' @param min_gain_to_split A number for the minimum loss reduction required
-#'  to make a further partition on a leaf node of the tree.
-#' @param bagging_fraction Subsampling proportion of rows.
-#' @param ... Other options to pass to \code{\link[lightgbm]{lightgbm.train}}.
+#'   to make a further partition on a leaf node of the tree.
+#' @param link_max_depth Logical, default FALSE. When TRUE, and when
+#'   \code{max_depth} is unconstrained \code{-1}, then \code{max_depth} will
+#'   be set to \code{floor(log2(num_leaves)) + link_max_depth_add}.
+#' @param add_to_linked_depth Integer value to add to \code{max_depth} when it
+#'   is linked to \code{num_leaves}.
+#' @param categorical_feature A character vector of feature names or an
+#'   integer vector with the indices of the features.
+#' @param max_bin Max number of bins that feature values will be bucketed in.
+#' @param feature_pre_filter Tell LightGBM to ignore the features that are
+#'   unsplittable based on \code{min_data_in_leaf}.
+#' @param verbose Integer. < 0: Fatal, = 0: Error (Warning), = 1: Info,
+#'   > 1: Debug.
+#' @param ... Engine arguments, hyperparameters, etc. that are passed on to
+#'   \code{\link[lightgbm]{lgb.train}}.
 #'
 #' @return A fitted \code{lgb.Booster} object.
-#' @noRd
+#' @export
 train_lightgbm <- function(x,
                            y,
-                           max_depth = 17,
                            num_iterations = 10,
+                           max_depth = 17,
+                           num_leaves = 31,
                            learning_rate = 0.1,
                            feature_fraction = 1,
                            min_data_in_leaf = 20,
                            min_gain_to_split = 0,
-                           bagging_fraction = 1,
+                           link_max_depth = FALSE,
+                           add_to_linked_depth = 2L,
+                           categorical_feature = NULL,
+                           max_bin = NULL,
+                           feature_pre_filter = FALSE,
+                           verbose = 0,
                            ...) {
   force(x)
   force(y)
   others <- list(...)
 
-  # feature_fraction ------------------------------
-  if (!is.null(feature_fraction)) {
-    feature_fraction <- feature_fraction / ncol(x)
-  }
-  if (feature_fraction > 1) {
-    feature_fraction <- 1
-  }
-
-  # subsample -----------------------
-  if (bagging_fraction > 1) {
-    bagging_fraction <- 1
-  }
-
-  # loss and num_class -------------------------
+  # Set training objective (always regression)
   if (!any(names(others) %in% c("objective"))) {
-    if (is.numeric(y)) {
-      others$num_class <- 1
-      others$objective <- "regression"
-    }
+    others$num_class <- 1
+    others$objective <- "regression"
   }
 
-  arg_list <- list(
-    num_iterations = num_iterations,
-    learning_rate = learning_rate,
-    max_depth = max_depth,
-    feature_fraction = feature_fraction,
-    min_data_in_leaf = min_data_in_leaf,
-    min_gain_to_split = min_gain_to_split,
-    bagging_fraction = bagging_fraction
-  )
-
-  # override or add some other args
-  others <- others[!(names(others) %in% c("data", names(arg_list)))]
-
-  # parallelism should be explicitly specified by the user
+  # Parallelism should be explicitly specified by the user
   nthreads_args <- c(
     "num_threads", "num_thread",
     "nthread", "nthreads", "n_jobs"
   )
   if (all(sapply(others[nthreads_args], is.null))) others$num_threads <- 1L
 
-  if (max_depth > 17) {
-    warning("max_depth > 17, num_leaves truncated to 2^17 - 1")
-    max_depth <- 17
+  # If linked, set max_depth slightly higher than depth-first
+  if (link_max_depth & max_depth == -1L) {
+    max_depth <- floor(log2(num_leaves)) + add_to_linked_depth
   }
 
-  if (is.null(others$num_leaves)) {
-    others$num_leaves <- max(2^max_depth - 1, 2)
+  if (is.null(num_leaves)) {
+    num_leaves <- max(2 ^ max_depth - 1, 2)
   }
 
+  arg_list <- list(
+    num_iterations = num_iterations,
+    max_depth = max_depth,
+    num_leaves = num_leaves,
+    learning_rate = learning_rate,
+    feature_fraction = feature_fraction,
+    min_data_in_leaf = min_data_in_leaf,
+    min_gain_to_split = min_gain_to_split
+  )
+
+  others <- others[!(names(others) %in% c("data", names(arg_list)))]
   arg_list <- purrr::compact(c(arg_list, others))
 
 
-  # train ------------------------
+  ##### Train #####
+  data_arg_list <- purrr::compact(list(
+    feature_pre_filter = feature_pre_filter,
+    max_bin = max_bin
+  ))
+
   d <- lightgbm::lgb.Dataset(
-    data = prepare_df_lgbm(x),
+    data = as.matrix(x),
     label = y,
-    categorical_feature = categorical_columns(x),
-    params = list(feature_pre_filter = FALSE)
+    categorical_feature = categorical_feature,
+    params = data_arg_list
   )
 
   main_args <- list(
     data = quote(d),
-    params = arg_list
+    params = arg_list,
+    verbose = verbose
   )
 
   call <- parsnip::make_call(fun = "lgb.train", ns = "lightgbm", main_args)
@@ -228,15 +181,14 @@ train_lightgbm <- function(x,
 #' Not intended for direct use.
 #'
 #' @param object A fitted object.
-#'
 #' @param new_data Data frame in which to look for variables with
 #'   which to predict.
 #' @param ... Additional named arguments passed to the \code{predict()} method
 #'   of the lgb.Booster object passed to object.
 #'
-#' @noRd
+#' @export
 pred_lgb_reg_num <- function(object, new_data, ...) {
-  stats::predict(object$fit, prepare_df_lgbm(new_data),
+  stats::predict(object$fit, as.matrix(new_data),
     reshape = TRUE,
     params = list(predict_disable_shape_check = TRUE), ...
   )
