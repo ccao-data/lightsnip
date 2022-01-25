@@ -266,6 +266,7 @@ pred_lgb_reg_num <- function(object, new_data, ...) {
 #'   When NULL, \code{predict()} will choose an appropriate value based on the
 #'   model's mode.
 #' @param trees An integer vector for the number of trees in the ensemble.
+#' @usage multi_predict(object, new_data, type = NULL, trees = NULL, ...)
 #'
 #' @export
 #' @importFrom purrr map_df

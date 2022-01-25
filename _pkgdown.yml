@@ -13,6 +13,7 @@ reference:
   - add_boost_tree_lightgbm
   - train_lightgbm
   - pred_lgb_reg_num
+  - multi_predict._lgb.Booster
 - subtitle: LightGBM hyperparameters
   desc:: >
     LightGBM dials:: paramter functions that can be used with tune_ functions.

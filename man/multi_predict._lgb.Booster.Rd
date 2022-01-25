@@ -4,7 +4,7 @@
 \alias{multi_predict._lgb.Booster}
 \title{Model predictions across many sub-models}
 \usage{
-\method{multi_predict}{`_lgb.Booster`}(object, new_data, type = NULL, trees = NULL, ...)
+multi_predict(object, new_data, type = NULL, trees = NULL, ...)
 }
 \arguments{
 \item{object}{A model_fit object.}
