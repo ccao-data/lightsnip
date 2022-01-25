@@ -163,7 +163,7 @@ train_lightgbm <- function(x,
 
   ##### Arguments #####
   # If linked, set max_depth slightly higher than depth-first
-  if (link_max_depth && max_depth == -1L) {
+  if (link_max_depth) {
     max_depth <- floor(log2(num_leaves)) + add_to_linked_depth
   }
   if (is.null(num_leaves) && max_depth > 0) {
