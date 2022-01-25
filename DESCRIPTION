@@ -1,7 +1,7 @@
 Package: lightsnip
 Type: Package
 Title: LightGBM Model Engine for Parsnip 
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: c(
     person(given = "Dan", family = "Snow", email="daniel.snow@cookcountyil.gov", role=c("aut", "cre"))
   )
