@@ -103,3 +103,20 @@ test_that("early stopping", {
     regex = "`early_stop` should be on"
   )
 })
+
+test_that("early stopping with weights", {
+  set.seed(233456)
+  expect_error(
+    reg_fit <-
+      parsnip::boost_tree(trees = 1000, mode = "regression") %>%
+      parsnip::set_engine(
+        engine = "lightgbm", validation = .1, metric = "rmse",
+        verbose = -1, min_data_in_leaf = 1, num_leaves = 20,
+        weight = rep(c(0.5, 1), nrow( mtcars[- (1:4), ]) / 2)
+      ) %>%
+      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+    regex = NA
+  )
+
+  expect_true(reg_fit$fit$params$num_iterations > reg_fit$fit$best_iter)
+})
