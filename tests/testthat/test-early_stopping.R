@@ -120,3 +120,27 @@ test_that("early stopping with weights", {
 
   expect_true(reg_fit$fit$params$num_iterations > reg_fit$fit$best_iter)
 })
+
+test_that("lgbm_save uses best prediction", {
+  expect_error(
+    reg_fit <-
+      parsnip::boost_tree(trees = 1000, mode = "regression") %>%
+      parsnip::set_engine(
+        engine = "lightgbm", validation = .1, metric = "rmse",
+        verbose = -1, min_data_in_leaf = 1, num_leaves = 20
+      ) %>%
+      parsnip::fit(mpg ~ ., data = mtcars),
+    regex = NA
+  )
+
+  best_iter <- reg_fit$fit$best_iter
+  max_iter <- length(reg_fit$fit$record_evals$validation$rmse$eval)
+
+  f <- tempfile()
+  lightgbm::lgb.save(reg_fit$fit, f)
+
+  reg_fit_loaded <- lightgbm::lgb.load(f)
+
+  expect_equal(best_iter, reg_fit_loaded$current_iter())
+  expect_gt(max_iter, reg_fit_loaded$current_iter())
+})
