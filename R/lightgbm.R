@@ -93,11 +93,9 @@ add_boost_tree_lightgbm <- function() {
 #'   integer vector with the indices of the features.
 #' @param weight A numeric vector of sample weights. Should be the sample length
 #'   as the number of rows of \code{x}.
-#' @param validation A positive number. If on \code{[0, 1)}
-#'   the value, \code{validation} is a random proportion of data
-#'   in \code{x} and \code{y} that are used for performance assessment and
-#'   potential early stopping. If 1 or greater, it is the _number_
-#'   of training set samples use for these purposes.
+#' @param validation A positive number on \code{[0, 1)}. \code{validation} is a
+#'   random proportion of data in \code{x} and \code{y} that are used for
+#'   performance assessment and potential early stopping.
 #' @param early_stop An integer or \code{NULL}. If not \code{NULL}, it is the
 #'   number of training iterations without improvement before stopping.
 #'   If \code{validation} is used, performance is base on the validation set;
