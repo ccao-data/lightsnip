@@ -91,6 +91,8 @@ add_boost_tree_lightgbm <- function() {
 #'   is linked to \code{num_leaves}.
 #' @param categorical_feature A character vector of feature names or an
 #'   integer vector with the indices of the features.
+#' @param weight A numeric vector of sample weights. Should be the sample length
+#'   as the number of rows of \code{x}.
 #' @param validation A positive number. If on \code{[0, 1)}
 #'   the value, \code{validation} is a random proportion of data
 #'   in \code{x} and \code{y} that are used for performance assessment and
@@ -119,6 +121,7 @@ train_lightgbm <- function(x,
                            link_max_depth = FALSE,
                            add_to_linked_depth = 2L,
                            categorical_feature = NULL,
+                           weight = NULL,
                            validation = 0,
                            early_stop = NULL,
                            max_bin = NULL,
@@ -185,35 +188,30 @@ train_lightgbm <- function(x,
     max_bin = max_bin
   ))
 
-  d <- lightgbm::lgb.Dataset(
-    data = as.matrix(x),
-    label = y,
-    categorical_feature = categorical_feature,
-    params = data_arg_list
-  )
-
   n <- nrow(x)
   if (validation > 0) {
     trn_index <- sample(1:n, size = floor(n * validation) + 1)
     valids <- list(validation = lightgbm::lgb.Dataset(
-        data = as.matrix(x[-trn_index, ]),
-        label = y[-trn_index],
-        categorical_feature = categorical_feature,
-        params = data_arg_list
-      ))
+      data = as.matrix(x[-trn_index, ]),
+      label = y[-trn_index],
+      categorical_feature = categorical_feature,
+      params = data_arg_list,
+      weight = weight[-trn_index]
+    ))
     d <- lightgbm::lgb.Dataset(
       data = as.matrix(x[trn_index, ]),
       label = y[trn_index],
       categorical_feature = categorical_feature,
-      params = data_arg_list
+      params = data_arg_list,
+      weight = weight[trn_index]
     )
-
   } else {
     d <- lightgbm::lgb.Dataset(
       data = as.matrix(x),
       label = y,
       categorical_feature = categorical_feature,
-      params = data_arg_list
+      params = data_arg_list,
+      weight = weight
     )
     valids <- list(training = d)
   }

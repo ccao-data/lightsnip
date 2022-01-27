@@ -13,6 +13,7 @@ train_lightgbm(
   link_max_depth = FALSE,
   add_to_linked_depth = 2L,
   categorical_feature = NULL,
+  weight = NULL,
   validation = 0,
   early_stop = NULL,
   max_bin = NULL,
@@ -44,6 +45,9 @@ is linked to \code{num_leaves}.}
 
 \item{categorical_feature}{A character vector of feature names or an
 integer vector with the indices of the features.}
+
+\item{weight}{A numeric vector of sample weights. Should be the sample length
+as the number of rows of \code{x}.}
 
 \item{validation}{A positive number. If on \code{[0, 1)}
 the value, \code{validation} is a random proportion of data

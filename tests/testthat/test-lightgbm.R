@@ -12,6 +12,38 @@ test_that("lightgbm regression", {
   expect_regression_works(model)
 })
 
+test_that("lightgbm with weights", {
+  model <- parsnip::boost_tree(trees = 50) %>%
+    parsnip::set_engine(
+      engine = "lightgbm",
+      objective = "regression", verbose = -1, verbosity = -1,
+      max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1,
+      weight = rep(1, nrow(mtcars))
+    ) %>%
+    parsnip::set_mode("regression")
+
+  expect_regression_works(model)
+
+  model_w_weights <- parsnip::boost_tree(trees = 50) %>%
+    parsnip::set_engine(
+      engine = "lightgbm",
+      objective = "regression", verbose = -1, verbosity = -1,
+      max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1,
+      weight = rep(c(0.5, 1), nrow(mtcars) / 2)
+    ) %>%
+    parsnip::set_mode("regression")
+
+  expect_regression_works(model_w_weights)
+
+  # Do weighted pred differ from unweighted?
+  adj <- parsnip::fit(model, mpg ~ ., data = mtcars)
+  adj_w <- parsnip::fit(model_w_weights, mpg ~ ., data = mtcars)
+
+  pred <- predict(adj, mtcars)$.pred
+  pred_w <- predict(adj_w, mtcars)$.pred
+  expect_all_preds_differ(list(pred, pred_w))
+})
+
 test_that("lightgbm with categoricals", {
   model <- parsnip::boost_tree(trees = 50) %>%
     parsnip::set_engine(
@@ -49,6 +81,7 @@ test_that("lightgbm alternate objective", {
 
   expect_equal(info$objective, "huber")
 })
+
 
 context("test tune")
 
