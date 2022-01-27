@@ -8,7 +8,7 @@ test_that("validation sets", {
         engine = "lightgbm", validation = .1,
         verbose = -1, min_data_in_leaf = 1, num_leaves = 50
       ) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars),
     regex = NA
   )
 
@@ -21,7 +21,7 @@ test_that("validation sets", {
         engine = "lightgbm", validation = .1, metric = "rmse",
         verbose = -1, min_data_in_leaf = 1, num_leaves = 50
       ) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars),
     regex = NA
   )
 
@@ -34,7 +34,7 @@ test_that("validation sets", {
         engine = "lightgbm", metric = "rmse",
         verbose = -1, min_data_in_leaf = 1, num_leaves = 50
       ) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars),
     regex = NA
   )
 
@@ -47,7 +47,7 @@ test_that("validation sets", {
         engine = "lightgbm", validation = 3, metric = "rmse",
         verbose = -1, min_data_in_leaf = 1, num_leaves = 50
       ) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars),
     regex = "`validation` should be on"
   )
 
@@ -62,7 +62,7 @@ test_that("early stopping", {
         engine = "lightgbm", validation = .1, metric = "rmse",
         verbose = -1, min_data_in_leaf = 1, num_leaves = 20,
       ) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars),
     regex = NA
   )
 
@@ -75,7 +75,7 @@ test_that("early stopping", {
         engine = "lightgbm", validation = .1, metric = "rmse",
         verbose = -1, min_data_in_leaf = 1, num_leaves = 20,
       ) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars),
     regex = NA
   )
 
@@ -92,14 +92,14 @@ test_that("early stopping", {
     reg_fit <-
       parsnip::boost_tree(trees = 20, stop_iter = 30, mode = "regression") %>%
       parsnip::set_engine("lightgbm", validation = .1, verbose = -1) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars),
     regex = "`early_stop` was reduced to 19"
   )
   expect_error(
     reg_fit <-
       parsnip::boost_tree(trees = 20, stop_iter = 0, mode = "regression") %>%
       parsnip::set_engine("lightgbm", validation = .1, verbose = -1) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars),
     regex = "`early_stop` should be on"
   )
 })
@@ -112,9 +112,9 @@ test_that("early stopping with weights", {
       parsnip::set_engine(
         engine = "lightgbm", validation = .1, metric = "rmse",
         verbose = -1, min_data_in_leaf = 1, num_leaves = 20,
-        weight = rep(c(0.5, 1), nrow( mtcars[- (1:4), ]) / 2)
+        weight = rep(c(0.5, 1), nrow(mtcars) / 2)
       ) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars),
     regex = NA
   )
 
