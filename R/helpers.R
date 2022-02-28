@@ -14,6 +14,8 @@ axe_tune_data <- function(x) {
   stripped <- dplyr::select(x, -dplyr::any_of("splits"))
   attrs <- purrr::list_modify(attributes(x), "names" = names(stripped))
   attributes(stripped) <- attrs
+  attributes(stripped)$rset_info$att$splits <- NULL
+  attributes(stripped)$rset_info$att$id <- NULL
 
   return(stripped)
 }
