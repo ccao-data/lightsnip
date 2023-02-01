@@ -13,7 +13,7 @@ pred_lgb_reg_num(object, new_data, ...)
 which to predict.}
 
 \item{...}{Additional named arguments passed to the \code{predict()} method
-of the lgb.Booster object passed to object.}
+of the \code{lgb.Booster} object.}
 }
 \description{
 Not intended for direct use.

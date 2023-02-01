@@ -4,7 +4,7 @@
 \alias{multi_predict._lgb.Booster}
 \title{Model predictions across many sub-models}
 \usage{
-multi_predict(object, new_data, type = NULL, trees = NULL, ...)
+\method{multi_predict}{`_lgb.Booster`}(object, new_data, type = NULL, trees = NULL, ...)
 }
 \arguments{
 \item{object}{A model_fit object.}
@@ -18,8 +18,8 @@ model's mode.}
 
 \item{trees}{An integer vector for the number of trees in the ensemble.}
 
-\item{...}{Optional arguments to pass to predict.model_fit(type = "raw")
-such as type.}
+\item{...}{Optional arguments to pass to
+\code{predict.model_fit(type = "raw")}, such as type.}
 }
 \description{
 For some models, predictions can be made on sub-models in the model object.

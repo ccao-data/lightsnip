@@ -1,15 +1,15 @@
 Package: lightsnip
 Type: Package
-Title: LightGBM Model Engine for Parsnip 
-Version: 0.0.2
+Title: LightGBM Model Engine for Parsnip
+Version: 0.0.3
 Authors@R: c(
     person(given = "Dan", family = "Snow", email="daniel.snow@cookcountyil.gov", role=c("aut", "cre"))
   )
 Description: Provides an expanded LightGBM engine for the parsnip package.
-URL: https://ccao-data-science---modeling.gitlab.io/packages/lightsnip/, https://gitlab.com/ccao-data-science---modeling/packages/lightsnip 
+URL: https://ccao-data-science---modeling.gitlab.io/packages/lightsnip/, https://gitlab.com/ccao-data-science---modeling/packages/lightsnip
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
-Imports: 
+Imports:
     butcher,
     dials,
     dplyr,
@@ -20,8 +20,9 @@ Imports:
     stats,
     tibble,
     zip
-Suggests: 
+Suggests:
     covr,
+    hardhat,
     testthat (>= 2.1.0),
     knitr,
     modeldata,
@@ -29,12 +30,12 @@ Suggests:
     lintr,
     pkgdown,
     readr,
-    jsonlite, 
+    jsonlite,
     recipes,
-    rsample, 
+    rsample,
     scales,
-    tidyr, 
-    tune, 
+    tidyr,
+    tune,
     workflows,
     yardstick
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3

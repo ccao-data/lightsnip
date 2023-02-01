@@ -91,12 +91,12 @@ add_boost_tree_lightgbm <- function() {
 #'   is linked to \code{num_leaves}.
 #' @param categorical_feature A character vector of feature names or an
 #'   integer vector with the indices of the features.
-#' @param weight A numeric vector of sample weights. Should be the sample length
+#' @param weight A numeric vector of sample weights. Should be the same length
 #'   as the number of rows of \code{x}.
 #' @param validation A positive number on \code{[0, 1)}. \code{validation} is a
 #'   random proportion of data in \code{x} and \code{y} that are used for
 #'   performance assessment and potential early stopping.
-#' @param early_stop An integer or \code{NULL}. If not \code{NULL}, it is the
+#' @param early_stop An integer or \code{NULL}. If an integer, it is the
 #'   number of training iterations without improvement before stopping.
 #'   If \code{validation} is used, performance is base on the validation set;
 #'   otherwise the training set is used.
@@ -238,13 +238,16 @@ train_lightgbm <- function(x,
 #' @param new_data Data frame in which to look for variables with
 #'   which to predict.
 #' @param ... Additional named arguments passed to the \code{predict()} method
-#'   of the lgb.Booster object passed to object.
+#'   of the \code{lgb.Booster} object.
 #'
 #' @export
 pred_lgb_reg_num <- function(object, new_data, ...) {
-  stats::predict(object$fit, as.matrix(new_data),
+  stats::predict(
+    object$fit,
+    as.matrix(new_data),
     reshape = TRUE,
-    params = list(predict_disable_shape_check = TRUE), ...
+    params = list(predict_disable_shape_check = TRUE),
+    ...
   )
 }
 
@@ -254,15 +257,14 @@ pred_lgb_reg_num <- function(object, new_data, ...) {
 #' For some models, predictions can be made on sub-models in the model object.
 #'
 #' @param object A model_fit object.
-#' @param ... Optional arguments to pass to predict.model_fit(type = "raw")
-#'   such as type.
+#' @param ... Optional arguments to pass to
+#'   \code{predict.model_fit(type = "raw")}, such as type.
 #' @param new_data A rectangular data object, such as a data frame.
 #' @param type A single character value or NULL. Possible values are
 #'   "numeric", "class", "prob", "conf_int", "pred_int", "quantile", or "raw".
 #'   When NULL, \code{predict()} will choose an appropriate value based on the
 #'   model's mode.
 #' @param trees An integer vector for the number of trees in the ensemble.
-#' @usage multi_predict(object, new_data, type = NULL, trees = NULL, ...)
 #'
 #' @export
 #' @importFrom purrr map_df

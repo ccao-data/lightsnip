@@ -46,14 +46,14 @@ is linked to \code{num_leaves}.}
 \item{categorical_feature}{A character vector of feature names or an
 integer vector with the indices of the features.}
 
-\item{weight}{A numeric vector of sample weights. Should be the sample length
+\item{weight}{A numeric vector of sample weights. Should be the same length
 as the number of rows of \code{x}.}
 
 \item{validation}{A positive number on \code{[0, 1)}. \code{validation} is a
 random proportion of data in \code{x} and \code{y} that are used for
 performance assessment and potential early stopping.}
 
-\item{early_stop}{An integer or \code{NULL}. If not \code{NULL}, it is the
+\item{early_stop}{An integer or \code{NULL}. If an integer, it is the
 number of training iterations without improvement before stopping.
 If \code{validation} is used, performance is base on the validation set;
 otherwise the training set is used.}

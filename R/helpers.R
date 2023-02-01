@@ -40,7 +40,7 @@ axe_recipe <- function(x) {
   stopifnot(class(x) == "recipe")
 
   axed <- rapply(x, butcher::butcher, how = "replace")
-  axed <- purrr::list_modify(axed, orig_lvls = NULL)
+  axed <- utils::modifyList(axed, list(orig_lvls = NULL))
   class(axed) <- "recipe"
 
   return(axed)

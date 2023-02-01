@@ -4,7 +4,7 @@ test_that("lightgbm regression", {
   model <- parsnip::boost_tree(trees = 50) %>%
     parsnip::set_engine(
       engine = "lightgbm",
-      objective = "regression", verbose = -1, verbosity = -1,
+      objective = "regression", verbose = -1,
       max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1
     ) %>%
     parsnip::set_mode("regression")
@@ -16,7 +16,7 @@ test_that("lightgbm with weights", {
   model <- parsnip::boost_tree(trees = 50) %>%
     parsnip::set_engine(
       engine = "lightgbm",
-      objective = "regression", verbose = -1, verbosity = -1,
+      objective = "regression", verbose = -1,
       max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1,
       weight = rep(1, nrow(mtcars))
     ) %>%
@@ -27,7 +27,7 @@ test_that("lightgbm with weights", {
   model_w_weights <- parsnip::boost_tree(trees = 50) %>%
     parsnip::set_engine(
       engine = "lightgbm",
-      objective = "regression", verbose = -1, verbosity = -1,
+      objective = "regression", verbose = -1,
       max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1,
       weight = rep(c(0.5, 1), nrow(mtcars) / 2)
     ) %>%

@@ -85,7 +85,7 @@ expect_can_tune_boost_tree <- function(model) {
     mpg ~ .,
     resamples = resamples,
     param_info = model %>%
-      dials::parameters() %>%
+      hardhat::extract_parameter_set_dials() %>%
       stats::update(
         learning_rate = learning_rate(),
         min_gain_to_split = min_gain_to_split(),
