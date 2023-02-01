@@ -40,19 +40,19 @@ remotes::install_gitlab(
 
 ## Differences compared to [treesnip](https://github.com/curso-r/treesnip)
 
--   Removed support for `tree` and `catboost` (LightGBM only)
--   Removed classification support for LightGBM (regression only)
--   Removed treesnip caps and warnings on `max_depth`, other parameters
--   Removed vignettes and samples
--   Remap parameters to engine args instead of parsnip model args
--   Added LightGBM-specific hyperparameter functions
--   Added LightGBM-specific save/load helpers
--   Added recipe/fit cleaning helpers
--   Force user to specify categorical columns by name, does *not*
-    implicitly convert factors to categoricals
--   Added early stopping from xgboost
--   Added more unit tests
--   Fixed a number of bugs
+- Removed support for `tree` and `catboost` (LightGBM only)
+- Removed classification support for LightGBM (regression only)
+- Removed treesnip caps and warnings on `max_depth`, other parameters
+- Removed vignettes and samples
+- Remap parameters to engine args instead of parsnip model args
+- Added LightGBM-specific hyperparameter functions
+- Added LightGBM-specific save/load helpers
+- Added recipe/fit cleaning helpers
+- Force user to specify categorical columns by name, does *not*
+  implicitly convert factors to categoricals
+- Added early stopping from xgboost
+- Added more unit tests
+- Fixed a number of bugs
 
 ## Basic usage with Tidymodels
 
@@ -114,18 +114,15 @@ search <- tune::tune_grid(
   grid = 2,
   metrics = yardstick::metric_set(yardstick::rmse)
 )
+#> Warning: `parameters.model_spec()` was deprecated in tune 0.1.6.9003.
+#> ℹ Please use `hardhat::extract_parameter_set_dials()` instead.
 
 # Finalize model
 final <- model %>%
   tune::finalize_model(tune::select_best(search)) %>%
   parsnip::set_mode("regression") %>%
   parsnip::fit(mpg ~ ., bake(prep(rec), mtcars_train))
-```
 
-\[LightGBM\] \[Warning\] verbosity is set=-1, verbose=-1 will be
-ignored. Current value: verbosity=-1
-
-``` r
 # Predict on test set
 mtcars_test %>%
   mutate(pred = predict(final, bake(prep(rec), .))$.pred) %>%
@@ -135,7 +132,7 @@ mtcars_test %>%
 
 |                |  mpg |  pred |
 |:---------------|-----:|------:|
-| Ford Pantera L | 15.8 | 13.34 |
-| Ferrari Dino   | 19.7 | 21.26 |
-| Maserati Bora  | 15.0 | 13.45 |
-| Volvo 142E     | 21.4 | 21.31 |
+| Ford Pantera L | 15.8 | 16.95 |
+| Ferrari Dino   | 19.7 | 21.21 |
+| Maserati Bora  | 15.0 | 13.80 |
+| Volvo 142E     | 21.4 | 22.55 |

@@ -93,7 +93,8 @@ model <- parsnip::boost_tree(
   trees = tune::tune()
 ) %>%
   parsnip::set_engine(
-    engine = "lightgbm", verbose = -1,
+    engine = "lightgbm",
+    verbose = -1,
     learning_rate = tune::tune(),
     min_gain_to_split = tune::tune(),
     feature_fraction = tune::tune(),
@@ -107,7 +108,7 @@ search <- tune::tune_grid(
   preprocessor = rec,
   resamples = resamples,
   param_info = model %>%
-    dials::parameters() %>%
+    hardhat::extract_parameter_set_dials() %>%
     stats::update(
       learning_rate = learning_rate(),
       min_gain_to_split = min_gain_to_split(),
