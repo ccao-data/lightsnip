@@ -98,9 +98,9 @@ purrr::pwalk(param_df_cat, function(...) {
   hp <- list(...)
 
   test_that(paste("lightgbm", hp$param), {
-    df <- data.frame(
-      x1 = as.factor(sample(letters, 1000, replace = TRUE)),
-      y = runif(1000)
+    df <- tibble::tibble(
+      y = runif(1000),
+      x1 = as.factor(sample(letters, 1000, replace = TRUE))
     )
 
     preds <- purrr::map2(hp$param, hp$values, function(x, y) {

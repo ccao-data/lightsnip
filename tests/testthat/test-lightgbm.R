@@ -1,4 +1,4 @@
-context("lightgbm regression")
+context("test lightgbm regression")
 
 test_that("lightgbm regression", {
   model <- parsnip::boost_tree(trees = 50) %>%
@@ -87,7 +87,7 @@ test_that("lighgbm throws error", {
     reg_fit <-
       parsnip::boost_tree(trees = 40, stop_iter = 2, mode = "regression") %>%
       parsnip::set_engine("lightgbm", validation = 10, verbose = -1) %>%
-      parsnip::fit(mpg ~ ., data = mtcars[- (1:4), ]),
+      parsnip::fit(mpg ~ ., data = mtcars[-(1:4), ]),
     regex = "`validation` should be on"
   )
 })
