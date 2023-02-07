@@ -66,16 +66,16 @@ library(lightsnip)
 library(tidymodels)
 
 # Create a dataset for training
-mtcars_train <- mtcars %>% 
+mtcars_train <- mtcars %>%
   dplyr::slice(1:28) %>%
   sample_n(size = 500, replace = TRUE) %>%
   mutate(cyl = as.factor(cyl), vs = as.factor(vs))
 
 # Create a test set
-mtcars_test <- mtcars %>% 
-  dplyr::slice(29:32) %>% 
+mtcars_test <- mtcars %>%
+  dplyr::slice(29:32) %>%
   mutate(cyl = as.factor(cyl), vs = as.factor(vs))
-  
+
 # Recipe to convert factors to categorical integers
 rec <- recipe(mpg ~ ., mtcars_train) %>%
   step_integer(all_nominal(), zero_based = TRUE)
@@ -89,7 +89,8 @@ model <- parsnip::boost_tree(
   trees = tune::tune()
 ) %>%
   parsnip::set_engine(
-    engine = "lightgbm", verbose = -1,
+    engine = "lightgbm",
+    verbose = -1,
     learning_rate = tune::tune(),
     min_gain_to_split = tune::tune(),
     feature_fraction = tune::tune(),
@@ -103,7 +104,7 @@ search <- tune::tune_grid(
   preprocessor = rec,
   resamples = resamples,
   param_info = model %>%
-    dials::parameters() %>%
+    hardhat::extract_parameter_set_dials() %>%
     stats::update(
       learning_rate = learning_rate(),
       min_gain_to_split = min_gain_to_split(),
@@ -114,8 +115,6 @@ search <- tune::tune_grid(
   grid = 2,
   metrics = yardstick::metric_set(yardstick::rmse)
 )
-#> Warning: `parameters.model_spec()` was deprecated in tune 0.1.6.9003.
-#> ℹ Please use `hardhat::extract_parameter_set_dials()` instead.
 
 # Finalize model
 final <- model %>%
@@ -132,7 +131,7 @@ mtcars_test %>%
 
 |                |  mpg |  pred |
 |:---------------|-----:|------:|
-| Ford Pantera L | 15.8 | 16.95 |
-| Ferrari Dino   | 19.7 | 21.21 |
-| Maserati Bora  | 15.0 | 13.80 |
-| Volvo 142E     | 21.4 | 22.55 |
+| Ford Pantera L | 15.8 | 18.26 |
+| Ferrari Dino   | 19.7 | 20.82 |
+| Maserati Bora  | 15.0 | 14.29 |
+| Volvo 142E     | 21.4 | 23.63 |

@@ -70,16 +70,16 @@ library(lightsnip)
 library(tidymodels)
 
 # Create a dataset for training
-mtcars_train <- mtcars %>% 
+mtcars_train <- mtcars %>%
   dplyr::slice(1:28) %>%
   sample_n(size = 500, replace = TRUE) %>%
   mutate(cyl = as.factor(cyl), vs = as.factor(vs))
 
 # Create a test set
-mtcars_test <- mtcars %>% 
-  dplyr::slice(29:32) %>% 
+mtcars_test <- mtcars %>%
+  dplyr::slice(29:32) %>%
   mutate(cyl = as.factor(cyl), vs = as.factor(vs))
-  
+
 # Recipe to convert factors to categorical integers
 rec <- recipe(mpg ~ ., mtcars_train) %>%
   step_integer(all_nominal(), zero_based = TRUE)
@@ -131,5 +131,4 @@ mtcars_test %>%
   mutate(pred = predict(final, bake(prep(rec), .))$.pred) %>%
   select(mpg, pred) %>%
   knitr::kable(digits = 2)
-
 ```
