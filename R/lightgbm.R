@@ -93,16 +93,24 @@ add_boost_tree_lightgbm <- function() {
 #'   integer vector with the indices of the features.
 #' @param weight A numeric vector of sample weights. Should be the same length
 #'   as the number of rows of \code{x}.
-#' @param validation A positive number on \code{[0, 1)}. \code{validation} is a
-#'   random proportion of data in \code{x} and \code{y} that are used for
-#'   performance assessment and potential early stopping.
+#' @param validation A positive number on \code{[0, 1)}. \code{validation} is
+#'   the proportion of data in \code{x} and \code{y} that is used for
+#'   performance assessment and early stopping.
+#' @param sample_type The sampling method for the validation set. Can be either
+#'   "random" (a completely random sample) or "recent" (the last X% of rows,
+#'   where X is the proportion specified by \code{validation}).
 #' @param early_stop An integer or \code{NULL}. If an integer, it is the
-#'   number of training iterations without improvement before stopping.
-#'   If \code{validation} is used, performance is base on the validation set;
-#'   otherwise the training set is used.
+#'   number of iterations without improvement before stopping.
+#'   Must be set when \code{validation} is > 0.
 #' @param max_bin Max number of bins that feature values will be bucketed in.
 #' @param feature_pre_filter Tell LightGBM to ignore the features that are
 #'   unsplittable based on \code{min_data_in_leaf}.
+#' @param free_raw_data LightGBM constructs its data format, called a "Dataset",
+#'   from tabular data. By default, that Dataset object on the R side does not
+#'   keep a copy of the raw data. This reduces LightGBM's memory consumption,
+#'   but it means that the Dataset object cannot be changed after it has been
+#'   constructed. If you'd prefer to be able to change the Dataset object after
+#'   construction, set \code{free_raw_data = FALSE}. Useful for debugging.
 #' @param verbose Integer. < 0: Fatal, = 0: Error (Warning), = 1: Info,
 #'   > 1: Debug.
 #' @param ... Engine arguments, hyperparameters, etc. that are passed on to
@@ -121,9 +129,11 @@ train_lightgbm <- function(x,
                            categorical_feature = NULL,
                            weight = NULL,
                            validation = 0,
+                           sample_type = "random",
                            early_stop = NULL,
                            max_bin = NULL,
                            feature_pre_filter = FALSE,
+                           free_raw_data = TRUE,
                            verbose = 0,
                            ...) {
   force(x)
@@ -151,14 +161,23 @@ train_lightgbm <- function(x,
   if (!is.null(early_stop)) {
     if (early_stop <= 1) {
       rlang::abort(
-        paste0("`early_stop` should be on [2, ",  num_iterations, ").")
+        paste0("`early_stop` should be on [2, ", num_iterations, ").")
       )
     } else if (early_stop >= num_iterations) {
       early_stop <- num_iterations - 1
       rlang::warn(
-        paste0("`early_stop` was reduced to ", early_stop, ".")
+        paste0(
+          "`early_stop` is greater than `num_iterations`.",
+          "`early_stop` reduced to ", early_stop, "."
+        )
       )
     }
+  }
+  if (is.null(early_stop) && validation > 0) {
+    rlang::abort("If `validation` is > 0, then `early_stop` must also be set.")
+  }
+  if (!sample_type %in% c("random", "recent")) {
+    rlang::abort("`sample_type` must be one of: 'random', 'recent'.")
   }
 
 
@@ -188,31 +207,36 @@ train_lightgbm <- function(x,
 
   n <- nrow(x)
   if (validation > 0) {
-    trn_index <- sample(1:n, size = floor(n * validation) + 1)
+    m <- min(floor(n * (1 - validation)), n - 1)
+    if (sample_type == "random") {
+      m <- min(floor(n * (1 - validation)), n - 1)
+      trn_index <- sample(1:n, size = max(m, 2))
+      val_index <- setdiff(1:n, trn_index)
+    } else if (sample_type == "recent") {
+      m <- min(n - floor(n * validation), n - 1)
+      trn_index <- seq(1, max(m, 2))
+      val_index <- setdiff(1:n, trn_index)
+    }
     valids <- list(validation = lightgbm::lgb.Dataset(
-      data = as.matrix(x[-trn_index, ]),
-      label = y[-trn_index],
+      data = as.matrix(x[val_index, , drop = FALSE]),
+      label = y[val_index],
       categorical_feature = categorical_feature,
       params = data_arg_list,
-      weight = weight[-trn_index]
+      weight = weight[val_index],
+      free_raw_data = free_raw_data
     ))
-    d <- lightgbm::lgb.Dataset(
-      data = as.matrix(x[trn_index, ]),
-      label = y[trn_index],
-      categorical_feature = categorical_feature,
-      params = data_arg_list,
-      weight = weight[trn_index]
-    )
   } else {
-    d <- lightgbm::lgb.Dataset(
-      data = as.matrix(x),
-      label = y,
-      categorical_feature = categorical_feature,
-      params = data_arg_list,
-      weight = weight
-    )
-    valids <- list(training = d)
+    trn_index <- 1:n
   }
+
+  d <- lightgbm::lgb.Dataset(
+    data = as.matrix(x[trn_index, , drop = FALSE]),
+    label = y[trn_index],
+    categorical_feature = categorical_feature,
+    params = data_arg_list,
+    weight = weight[trn_index],
+    free_raw_data = free_raw_data
+  )
 
 
   ##### Train #####
@@ -220,10 +244,13 @@ train_lightgbm <- function(x,
     params = arg_list,
     data = quote(d),
     nrounds = num_iterations,
-    valids = quote(valids),
-    early_stopping_rounds = early_stop,
     verbose = verbose
   )
+
+  if (!is.null(early_stop) && validation > 0) {
+    main_args$valids <- quote(valids)
+    main_args$early_stopping_rounds <- early_stop
+  }
 
   call <- parsnip::make_call(fun = "lgb.train", ns = "lightgbm", main_args)
   rlang::eval_tidy(call, env = rlang::current_env())

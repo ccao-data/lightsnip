@@ -15,9 +15,11 @@ train_lightgbm(
   categorical_feature = NULL,
   weight = NULL,
   validation = 0,
+  sample_type = "random",
   early_stop = NULL,
   max_bin = NULL,
   feature_pre_filter = FALSE,
+  free_raw_data = TRUE,
   verbose = 0,
   ...
 )
@@ -49,19 +51,29 @@ integer vector with the indices of the features.}
 \item{weight}{A numeric vector of sample weights. Should be the same length
 as the number of rows of \code{x}.}
 
-\item{validation}{A positive number on \code{[0, 1)}. \code{validation} is a
-random proportion of data in \code{x} and \code{y} that are used for
-performance assessment and potential early stopping.}
+\item{validation}{A positive number on \code{[0, 1)}. \code{validation} is
+the proportion of data in \code{x} and \code{y} that is used for
+performance assessment and early stopping.}
+
+\item{sample_type}{The sampling method for the validation set. Can be either
+"random" (a completely random sample) or "recent" (the last X% of rows,
+where X is the proportion specified by \code{validation}).}
 
 \item{early_stop}{An integer or \code{NULL}. If an integer, it is the
-number of training iterations without improvement before stopping.
-If \code{validation} is used, performance is base on the validation set;
-otherwise the training set is used.}
+number of iterations without improvement before stopping.
+Must be set when \code{validation} is > 0.}
 
 \item{max_bin}{Max number of bins that feature values will be bucketed in.}
 
 \item{feature_pre_filter}{Tell LightGBM to ignore the features that are
 unsplittable based on \code{min_data_in_leaf}.}
+
+\item{free_raw_data}{LightGBM constructs its data format, called a "Dataset",
+from tabular data. By default, that Dataset object on the R side does not
+keep a copy of the raw data. This reduces LightGBM's memory consumption,
+but it means that the Dataset object cannot be changed after it has been
+constructed. If you'd prefer to be able to change the Dataset object after
+construction, set \code{free_raw_data = FALSE}. Useful for debugging.}
 
 \item{verbose}{Integer. < 0: Fatal, = 0: Error (Warning), = 1: Info,
 > 1: Debug.}
