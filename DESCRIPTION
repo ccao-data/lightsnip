@@ -7,8 +7,8 @@ Authors@R: c(
   )
 Date: 2023-02-07
 Description: Provides an expanded LightGBM engine for the parsnip package.
-URL: https://ccao-data-science---modeling.gitlab.io/packages/lightsnip/, https://gitlab.com/ccao-data-science---modeling/packages/lightsnip
-License: GPL-3 + file LICENSE
+URL: https://ccao-data.github.io/lightsnip/, https://github.com/ccao-data/lightsnip
+License: AGPL-3 + file LICENSE
 Encoding: UTF-8
 Imports:
     butcher,

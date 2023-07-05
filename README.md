@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Lightsnip package <a href='https://gitlab.com/ccao-data-science---modeling/packages/lightsnip'><img src='man/figures/logo.png' align="right" height="139" /></a>
+# Lightsnip package <a href='https://github.com/ccao-data/lightsnip'><img src='man/figures/logo.png' align="right" height="139" /></a>
 
 Lightsnip is a hard fork of
 [curso-r/treesnip](https://github.com/curso-r/treesnip). It adds
@@ -11,32 +11,29 @@ only as a dependency for CCAO regression models.
 
 For detailed documentation on included functions, [**visit the full
 reference
-list**](https://ccao-data-science---modeling.gitlab.io/packages/lightsnip/reference/).
+list**](https://ccao-data.github.io/lightsnip/reference/index.html).
 
 ## Installation
 
-You can install the released version of `lightsnip` directly from GitLab
-by running the following R command after installing
-[remotes](https://github.com/r-lib/remotes):
+You can install the released version of `lightsnip` directly from GitHub
+with one of the following commands:
 
 ``` r
-remotes::install_gitlab("ccao-data-science---modeling/packages/lightsnip")
+# Using remotes
+remotes::install_github("ccao-data/lightsnip")
+
+# Using renv
+renv::install("ccao-data/lightsnip")
+
+# Using pak
+pak::pak("ccao-data/lightsnip")
+
+# Append the @ symbol for a specific version
+remotes::install_github("ccao-data/lightsnip@0.0.5")
 ```
 
-Occasionally, when using brand-new or source versions of packages,
-installation [on Windows will fail with the following
-error](https://github.com/rstudio/renv/issues/162):
-
-    DLL 'package_name' not found: maybe not installed for this architecture?
-
-If this happens, try using the following installation command:
-
-``` r
-remotes::install_gitlab(
-  repo = "ccao-data-science---modeling/packages/lightsnip",
-  INSTALL_opts = "--no-multiarch"
-)
-```
+Once it is installed, you can use it just like any other package. Simply
+call `library(assessr)` at the beginning of your script.
 
 ## Differences compared to [treesnip](https://github.com/curso-r/treesnip)
 
@@ -131,7 +128,7 @@ mtcars_test %>%
 
 |                |  mpg |  pred |
 |:---------------|-----:|------:|
-| Ford Pantera L | 15.8 | 18.26 |
-| Ferrari Dino   | 19.7 | 20.82 |
-| Maserati Bora  | 15.0 | 14.29 |
-| Volvo 142E     | 21.4 | 23.63 |
+| Ford Pantera L | 15.8 | 17.70 |
+| Ferrari Dino   | 19.7 | 20.99 |
+| Maserati Bora  | 15.0 | 14.17 |
+| Volvo 142E     | 21.4 | 23.34 |
