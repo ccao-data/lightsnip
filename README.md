@@ -3,6 +3,12 @@
 
 # Lightsnip <a href='https://github.com/ccao-data/lightsnip'><img src='man/figures/logo.png' align="right" height="139" /></a>
 
+[![R-CMD-check](https://github.com/ccao-data/lightsnip/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ccao-data/lightsnip/actions/workflows/R-CMD-check.yaml)
+[![test-coverage](https://github.com/ccao-data/lightsnip/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/ccao-data/lightsnip/actions/workflows/test-coverage.yaml)
+[![lint](https://github.com/ccao-data/lightsnip/actions/workflows/lint.yaml/badge.svg)](https://github.com/ccao-data/lightsnip/actions/workflows/lint.yaml)
+[![pre-commit](https://github.com/ccao-data/lightsnip/actions/workflows/pre-commit.yaml/badge.svg)](https://github.com/ccao-data/lightsnip/actions/workflows/pre-commit.yaml)
+[![codecov](https://codecov.io/gh/ccao-data/lightsnip/branch/master/graph/badge.svg)](https://codecov.io/gh/ccao-data/lightsnip)
+
 Lightsnip is a hard fork of
 [curso-r/treesnip](https://github.com/curso-r/treesnip). It adds
 LightGBM bindings for parsnip and enables more advanced LightGBM
@@ -128,7 +134,7 @@ mtcars_test %>%
 
 |                | actual_mpg | pred_mpg |
 |:---------------|-----------:|---------:|
-| Ford Pantera L |       15.8 |    16.18 |
-| Ferrari Dino   |       19.7 |    21.39 |
-| Maserati Bora  |       15.0 |    13.57 |
-| Volvo 142E     |       21.4 |    21.72 |
+| Ford Pantera L |       15.8 |    13.72 |
+| Ferrari Dino   |       19.7 |    21.29 |
+| Maserati Bora  |       15.0 |    13.65 |
+| Volvo 142E     |       21.4 |    22.04 |
