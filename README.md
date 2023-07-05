@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Lightsnip package <a href='https://github.com/ccao-data/lightsnip'><img src='man/figures/logo.png' align="right" height="139" /></a>
+# Lightsnip <a href='https://github.com/ccao-data/lightsnip'><img src='man/figures/logo.png' align="right" height="139" /></a>
 
 Lightsnip is a hard fork of
 [curso-r/treesnip](https://github.com/curso-r/treesnip). It adds
@@ -121,14 +121,14 @@ final <- model %>%
 
 # Predict on test set
 mtcars_test %>%
-  mutate(pred = predict(final, bake(prep(rec), .))$.pred) %>%
-  select(mpg, pred) %>%
+  mutate(pred_mpg = predict(final, bake(prep(rec), .))$.pred) %>%
+  select(actual_mpg = mpg, pred_mpg) %>%
   knitr::kable(digits = 2)
 ```
 
-|                |  mpg |  pred |
-|:---------------|-----:|------:|
-| Ford Pantera L | 15.8 | 17.70 |
-| Ferrari Dino   | 19.7 | 20.99 |
-| Maserati Bora  | 15.0 | 14.17 |
-| Volvo 142E     | 21.4 | 23.34 |
+|                | actual_mpg | pred_mpg |
+|:---------------|-----------:|---------:|
+| Ford Pantera L |       15.8 |    16.18 |
+| Ferrari Dino   |       19.7 |    21.39 |
+| Maserati Bora  |       15.0 |    13.57 |
+| Volvo 142E     |       21.4 |    21.72 |

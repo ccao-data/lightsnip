@@ -13,13 +13,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Lightsnip package <a href='https://github.com/ccao-data/lightsnip'><img src='man/figures/logo.png' align="right" height="139" /></a>
+# Lightsnip <a href='https://github.com/ccao-data/lightsnip'><img src='man/figures/logo.png' align="right" height="139" /></a>
 
 Lightsnip is a hard fork of [curso-r/treesnip](https://github.com/curso-r/treesnip). It adds LightGBM bindings for parsnip and enables more advanced LightGBM features, such as early stopping. It is not intended for general use, only as a dependency for CCAO regression models.
 
-For detailed documentation on included functions, [**visit the
-full reference
-list**](https://ccao-data.github.io/lightsnip/reference/index.html).
+For detailed documentation on included functions, [**visit the full reference list**](https://ccao-data.github.io/lightsnip/reference/index.html).
 
 ## Installation
 
@@ -125,7 +123,7 @@ final <- model %>%
 
 # Predict on test set
 mtcars_test %>%
-  mutate(pred = predict(final, bake(prep(rec), .))$.pred) %>%
-  select(mpg, pred) %>%
+  mutate(pred_mpg = predict(final, bake(prep(rec), .))$.pred) %>%
+  select(actual_mpg = mpg, pred_mpg) %>%
   knitr::kable(digits = 2)
 ```
