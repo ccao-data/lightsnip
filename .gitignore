@@ -9,3 +9,5 @@
 public/
 renv/
 renv.lock
+vignettes/*_files
+vignettes/*.html

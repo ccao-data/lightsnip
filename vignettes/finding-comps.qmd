@@ -1,0 +1,343 @@
+---
+title: "Finding comparables with LightGBM"
+format: html
+---
+
+```{r opts, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r setup, message=FALSE, warning=FALSE}
+library(AmesHousing)
+library(data.table)
+library(DiagrammeR)
+library(dplyr)
+library(kableExtra)
+library(lightgbm)
+library(lightsnip)
+library(scales)
+library(snakecase)
+library(tidymodels)
+
+# Function to plot LightGBM trees. Sourced originally from:
+# https://github.com/microsoft/LightGBM/issues/1222#issuecomment-1134401696
+lgb.plot.tree <- function(model = NULL, tree = NULL, rules = NULL) {
+  dt <- lgb.model.dt.tree(model)
+  dt <- dt[tree_index == tree, ]
+  data.table::setnames(
+    dt,
+    old = c("tree_index", "split_feature", "threshold", "split_gain"),
+    new = c("Tree", "Feature", "Split", "Gain")
+  )
+  dt[, Value := 0.0]
+  dt[, Value := leaf_value]
+  dt[is.na(Value), Value := internal_value]
+  dt[is.na(Gain), Gain := leaf_value]
+  dt[is.na(Feature), Feature := "Leaf"]
+  dt[, Node := split_index]
+  max_node <- max(dt[["Node"]], na.rm = TRUE)
+  dt[is.na(Node), Node := max_node + leaf_index + 1]
+  dt[, ID := paste(Tree, Node, sep = "-")]
+  dt[, parent := node_parent][is.na(parent), parent := leaf_parent]
+  dt[, Yes := dt$ID[match(dt$Node, dt$parent)]]
+  dt <- dt[nrow(dt):1, ]
+  dt[, No := dt$ID[match(dt$Node, dt$parent)]]
+  dt[default_left == TRUE, Missing := Yes]
+  dt[default_left == FALSE, Missing := Yes]
+  zero_present <- function(x) {
+    sapply(strsplit(as.character(x), "||", fixed = TRUE), function(el) {
+      any(el == "0")
+    })
+  }
+  dt[zero_present(Split), Missing := Yes]
+  dt[Feature == "Leaf", label := paste0(
+    Feature, " ", leaf_index,
+    "\nValue: ", scales::dollar(Value, accuracy = 1)
+  )]
+  dt[Feature != "Leaf", label := paste0(
+    "Split ", split_index, "\n", Feature,
+    "\nValue: ", scales::dollar(Value, accuracy = 1)
+  )]
+  dt[Node == 0, label := paste0("Tree ", Tree, "\n", label)]
+  dt[, shape := "rectangle"][Feature == "Leaf", shape := "oval"]
+  dt[, filledcolor := "Beige"][Feature == "Leaf", filledcolor := "Khaki"]
+
+  dt <- dt[order(-Tree)]
+  nodes <- DiagrammeR::create_node_df(
+    n         = nrow(dt),
+    ID        = dt$ID,
+    label     = dt$label,
+    fillcolor = dt$filledcolor,
+    shape     = dt$shape,
+    data      = dt$Feature,
+    fontcolor = "black"
+  )
+  numeric_idx <- suppressWarnings(!is.na(as.numeric(dt[["Split"]])))
+  dt[numeric_idx, Split := round(as.numeric(Split), 4)]
+  levels.to.names <- function(x, feature_name, rules) {
+    lvls <- sort(rules[[feature_name]])
+    result <- strsplit(x, "||", fixed = TRUE)
+    result <- lapply(result, as.numeric)
+    levels_to_names <- function(x) {
+      names(lvls)[as.numeric(x)]
+    }
+    result <- lapply(result, levels_to_names)
+    result <- lapply(result, paste, collapse = "\n")
+    result <- as.character(result)
+  }
+  if (!is.null(rules)) {
+    for (f in names(rules)) {
+      dt[Feature == f & decision_type == "==", Split := levels.to.names(Split, f, rules)]
+    }
+  }
+  dt[nchar(Split) > 500, Split := "Split too long to render"]
+
+  edges <- DiagrammeR::create_edge_df(
+    from = match(dt[Feature != "Leaf", c(ID)] %>% rep(2), dt$ID),
+    to = match(dt[Feature != "Leaf", c(Yes, No)], dt$ID),
+    label = dt[Feature != "Leaf", paste(decision_type, Split)] %>%
+      c(rep("", nrow(dt[Feature != "Leaf"]))),
+    style = dt[Feature != "Leaf", ifelse(Missing == Yes, "bold", "solid")] %>%
+      c(dt[Feature != "Leaf", ifelse(Missing == No, "bold", "solid")]),
+    rel = "leading_to"
+  )
+
+  graph <- DiagrammeR::create_graph(
+    nodes_df = nodes,
+    edges_df = edges,
+    attr_theme = NULL
+  ) %>%
+    DiagrammeR::add_global_graph_attrs(
+      attr_type = "graph",
+      attr = c("layout", "rankdir"),
+      value = c("dot", "LR")
+    ) %>%
+    DiagrammeR::add_global_graph_attrs(
+      attr_type = "node",
+      attr = c("color", "style", "fontname"),
+      value = c("DimGray", "filled", "Helvetica")
+    ) %>%
+    DiagrammeR::add_global_graph_attrs(
+      attr_type = "edge",
+      attr = c("color", "arrowsize", "arrowhead", "fontname"),
+      value = c("DimGray", "1.5", "vee", "Helvetica")
+    )
+
+  return(graph)
+}
+```
+
+```{r train_model, warning=FALSE, message=FALSE, results='hide'}
+# Create a standard tidymodels workflow using LightGBM
+qmd_seed <- 2021
+set.seed(qmd_seed)
+
+# Train/test split
+ames <- AmesHousing::make_ames() %>%
+  rename_with(~ snakecase::to_snake_case(.x)) %>%
+  rsample::initial_split(prop = 0.8)
+ames_train <- rsample::training(ames)
+ames_test <- rsample::testing(ames)
+
+# Tell model which vars to use and convert factors to int
+ames_recp <- recipes::recipe(
+  sale_price ~ lot_area + overall_cond +
+    year_built + gr_liv_area + neighborhood,
+  data = ames_train
+) %>%
+  step_integer(all_nominal(), zero_based = TRUE)
+
+# Add the model specification and workflow
+ames_model <- parsnip::boost_tree(trees = 2) %>%
+  set_mode("regression") %>%
+  set_engine(
+    engine = "lightgbm",
+    seed = qmd_seed,
+    deterministic = TRUE,
+    categorical_feature = c("overall_cond", "neighborhood"),
+    num_leaves = 11
+  )
+
+ames_wflow <- workflow() %>%
+  add_model(ames_model) %>%
+  add_recipe(
+    recipe = ames_recp,
+    blueprint = hardhat::default_recipe_blueprint(allow_novel_levels = TRUE)
+  )
+
+# Fit the model, then extract the fitted engine object
+ames_fit <- parsnip::fit(ames_wflow, ames_train)
+ames_fit_eng <- parsnip::extract_fit_engine(ames_fit)
+
+# Extract the tree structure from the fitted engine object
+ames_tree_0 <- lgb.plot.tree(ames_fit_eng, 0)
+```
+
+The [Cook County Assessor's Office (CCAO)](https://www.cookcountyassessor.com/) uses LightGBM for its [residential](https://github.com/ccao-data/model-res-avm) and [condominium](https://github.com/ccao-data/model-condo-avm) valuation models. [LightGBM](https://github.com/microsoft/LightGBM) is a machine learning framework that works by iteratively growing many [decision trees](https://en.wikipedia.org/wiki/Decision_tree). It is especially suited to data with many categorical variables and complex interactions, such as housing data.
+
+However, LightGBM is also complicated. Its outputs can be difficult to explain and interpret, especially as model complexity grows. Techniques such as [SHAP values](https://github.com/shap/shap) can help, but aren't inuitive to the average person.
+
+This vignette outlines a novel technique to explain LightGBM outputs specifically for housing data. The technique generates [comparable properties](https://www.investopedia.com/terms/c/comparables.asp) by exploiting the tree structure of a trained LightGBM model. Its goal is to help diagnose model issues and answer a common question from property owners, "What comparables did you use to value my property?"
+
+## How Decision Trees Work
+
+To understand the comp finding technique, you must first understand how decision trees are used to determine a property's value. Below is a simple decision tree trained on the [Ames Housing Dataset](https://www.tmwr.org/ames.html). It is made up of rectangular <span style="background-color:#F5F5DC"><strong>splits</strong></span> and oval <span style="background-color:#F0E68C"><strong>leaves</strong></span>. 
+
+#### Ames Housing Data: Example Decision Tree
+
+```{r render_tree, message=FALSE}
+ames_tree_0 %>%
+  render_graph(as_svg = TRUE)
+```
+
+<br>
+
+Each <span style="background-color:#F5F5DC"><strong>split</strong></span> has a _variable_ (`gr_liv_area`) and a _rule_ (`<= 1224.5`), and the **bold** arrow points to the node you should go to when a rule is true. For example, at Split 4 in the tree above, properties with a living area of less than `1224.5` should proceed to Split 9.
+
+Each <span style="background-color:#F0E68C"><strong>leaf</strong></span> shows the value a property will get from the tree after going through all the splits. For example, the Ames property below (ID = 2) follows the purple path through through the tree based on its characteristics. Its predicted value from this tree is $184,306, as shown at the terminal leaf node (Leaf 4).
+
+```{r}
+ames_test_prep <- recipes::bake(
+  prep(ames_recp),
+  new_data = ames_test,
+  all_predictors()
+)
+
+example_prop_1 <- 2
+example_prop_2 <- 75
+ames_example_props <- ames_test_prep %>%
+  dplyr::slice(c(example_prop_1, example_prop_2)) %>%
+  mutate(
+    id = c(example_prop_1, example_prop_2),
+    across(c(gr_liv_area, lot_area), scales::comma)
+  ) %>%
+  select(
+    ID = id, `Livable Area` = gr_liv_area, `Lot Area` = lot_area,
+    `Year Built` = year_built, Condition = overall_cond,
+    Neighborhood = neighborhood
+  ) %>%
+  mutate(
+    `Pred. Value` = scales::dollar(predict(
+      ames_fit_eng,
+      data = as.matrix(ames_test_prep[c(example_prop_1, example_prop_2), ]),
+      num_iteration = 1
+    ), accuracy = 1)
+  )
+
+ames_example_props[1, 7] <- paste0("<span style='background-color:plum'>", ames_example_props[1, 7], "</span>")
+ames_example_props %>%
+  dplyr::slice(1) %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1, background = "thistle", align = "right")
+```
+
+<br>
+
+```{r}
+ames_tree_0 %>%
+  set_node_attrs(fillcolor, "thistle", c(21, 13, 12, 10)) %>%
+  set_node_attrs(fillcolor, "plum", c(9)) %>%
+  render_graph(as_svg = TRUE)
+```
+<br><br>
+
+Other properties may have a different path through the tree. Below, property number 75 takes the green path through the tree and receives a predicted value of $195,367.
+
+```{r}
+ames_example_props[2, 7] <- paste0("<span style='background-color:limegreen'>", ames_example_props[2, 7], "</span>")
+ames_example_props %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1, background = "thistle", align = "right") %>%
+  row_spec(2, background = "palegreen", align = "right")
+```
+
+<br>
+
+```{r}
+ames_tree_0 %>%
+  set_node_attrs(fillcolor, "grey85", c(21)) %>%
+  set_node_attrs(fillcolor, "thistle", c(13, 12, 10)) %>%
+  set_node_attrs(fillcolor, "plum", c(9)) %>%
+  set_node_attrs(fillcolor, "palegreen", c(20, 16)) %>%
+  set_node_attrs(fillcolor, "limegreen", c(15)) %>%
+  render_graph(as_svg = TRUE)
+```
+
+
+
+## How LightGBM Works
+
+#### Ames Housing Data: Tree 0
+
+```{r}
+ames_tree_0 %>%
+  set_node_attrs(fillcolor, "thistle", c(21, 13, 12, 10)) %>%
+  set_node_attrs(fillcolor, "plum", c(9)) %>%
+  render_graph(as_svg = TRUE)
+```
+
+#### Ames Housing Data: Tree 1
+
+```{r}
+ames_tree_1 <- lgb.plot.tree(ames_fit_eng, 1)
+ames_tree_1 %>%
+  set_node_attrs(fillcolor, "thistle", c(21, 11, 10, 8)) %>%
+  set_node_attrs(fillcolor, "plum", c(7)) %>%
+  render_graph(as_svg = TRUE)
+```
+
+
+
+```{r}
+ames_example_lgb <- ames_test_prep %>%
+  dplyr::slice(c(example_prop_1, example_prop_2)) %>%
+  mutate(
+    id = c(example_prop_1, example_prop_2),
+    across(c(gr_liv_area, lot_area), scales::comma)
+  ) %>%
+  select(
+    ID = id, `Livable Area` = gr_liv_area, `Lot Area` = lot_area,
+    `Year Built` = year_built, Condition = overall_cond,
+    Neighborhood = neighborhood
+  ) %>%
+  mutate(
+    `Pred. Value (Tree 0)` = predict(
+      ames_fit_eng,
+      data = as.matrix(ames_test_prep[c(example_prop_1, example_prop_2), ]),
+      num_iteration = 1
+    ),
+    `Pred. Value (Final)` = predict(
+      ames_fit_eng,
+      data = as.matrix(ames_test_prep[c(example_prop_1, example_prop_2), ]),
+      num_iteration = 2
+    ),
+    `Pred. Value (Tree 1)` =
+      `Pred. Value (Final)` - `Pred. Value (Tree 0)`
+  ) %>%
+  dplyr::relocate(`Pred. Value (Final)`, .after = everything()) %>%
+  mutate(
+    across(starts_with("Pred."), ~ scales::dollar(.x, accuracy = 1)),
+    `Pred. Value (Tree 1)` = paste("+", `Pred. Value (Tree 1)`)
+  )
+
+ames_example_lgb[1, 7] <- paste0("<span style='background-color:plum'>", ames_example_lgb[1, 7], "</span>")
+ames_example_lgb[1, 8] <- paste0("<span style='background-color:plum'>", ames_example_lgb[1, 8], "</span>")
+ames_example_lgb %>%
+  dplyr::slice(1) %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1, background = "thistle", align = "right") %>%
+  column_spec(9, background = "plum")
+```
+
+
+- How decision trees work
+
+- How the data gets saved (as a matrix)
+
+## Finding comps
+
+- Finding the most comparable property
+- Doing it at scale
