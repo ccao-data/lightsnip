@@ -177,11 +177,11 @@ The [Cook County Assessor's Office (CCAO)](https://www.cookcountyassessor.com/) 
 
 However, LightGBM is also complicated. Its outputs can be difficult to explain and interpret, especially as model complexity grows. Techniques such as [SHAP values](https://github.com/shap/shap) can help, but aren't inuitive to the average person.
 
-This vignette outlines a novel technique to explain LightGBM outputs specifically for housing data. The technique generates [comparable properties](https://www.investopedia.com/terms/c/comparables.asp) by exploiting the tree structure of a trained LightGBM model. Its goal is to help diagnose model issues and answer a common question from property owners, "What comparables did you use to value my property?"
+This vignette outlines a novel technique to explain LightGBM outputs specifically for housing data. The technique discovers [comparable properties](https://www.investopedia.com/terms/c/comparables.asp) by exploiting the tree structure of a trained LightGBM model. Its goal is to help diagnose model issues and answer a common question from property owners, "What comparables did you use to value my property?"
 
 ## How Decision Trees Work
 
-To understand the comp finding technique, you must first understand how decision trees are used to determine a property's value. Below is a simple decision tree trained on the [Ames Housing Dataset](https://www.tmwr.org/ames.html). It is made up of rectangular <span style="background-color:#F5F5DC"><strong>splits</strong></span> and oval <span style="background-color:#F0E68C"><strong>leaves</strong></span>. 
+To understand the comparable (comp) finding technique, you must first understand how decision trees work to determine a property's value. Below is a simple decision tree trained on the [Ames Housing Dataset](https://www.tmwr.org/ames.html). It is made up of rectangular <span style="background-color:#F5F5DC"><strong>splits</strong></span> and oval <span style="background-color:#F0E68C"><strong>leaves</strong></span>. 
 
 #### Ames Housing Data: Example Decision Tree
 
@@ -192,9 +192,9 @@ ames_tree_0 %>%
 
 <br>
 
-Each <span style="background-color:#F5F5DC"><strong>split</strong></span> has a _variable_ (`gr_liv_area`) and a _rule_ (`<= 1224.5`), and the **bold** arrow points to the node you should go to when a rule is true. For example, at Split 4 in the tree above, properties with a living area of less than `1224.5` should proceed to Split 9.
+Each <span style="background-color:#F5F5DC"><strong>split</strong></span> has a _variable_ (`gr_liv_area`) and a _rule_ (`<= 1224.5`), and the **bold** arrow points to the node you should go to when the rule is true about a given property. For example, at Split 4 in the tree above, properties with a living area of less than `1224.5` should proceed to Split 9.
 
-Each <span style="background-color:#F0E68C"><strong>leaf</strong></span> shows the value a property will get from the tree after going through all the splits. For example, the Ames property below (ID = 2) follows the purple path through through the tree based on its characteristics. Its predicted value from this tree is $184,306, as shown at the terminal leaf node (Leaf 4).
+Each <span style="background-color:#F0E68C"><strong>leaf</strong></span> shows the value a property will get from the tree after going through all the splits. For example, the Ames target property below (ID = 2) follows the purple path through through the tree based on its characteristics. Its predicted value from the tree is $184,306, as shown at the terminal leaf node (<span style='background-color:plum'><strong>Leaf 4</strong></span>).
 
 ```{r}
 ames_test_prep <- recipes::bake(
@@ -265,9 +265,65 @@ ames_tree_0 %>%
   render_graph(as_svg = TRUE)
 ```
 
+<br>
 
+The process of "predicting" with a decision tree is just running each property through the rules established by the splits. Properties with similar split outcomes will also be similar in terms of their characteristics and will end up in the same leaf node of the tree. As a result, extracting comparables from a single tree is simple: just find all the properties that share a leaf node with your target. For example, here are a few comparables for our target property (ID = 2), which ends up in <span style='background-color:plum'><strong>Leaf 4</strong></span>.
+
+```{r, warning=FALSE}
+leaf_4_ids <- predict(
+  ames_fit_eng,
+  data = as.matrix(ames_test_prep),
+  num_iteration = 1,
+  predleaf = TRUE
+) %>%
+  as_tibble() %>%
+  mutate(id = row_number()) %>%
+  filter(V1 == 4) %>%
+  dplyr::slice(2:11) %>%
+  pull(id)
+
+ames_example_comps1 <- ames_test_prep %>%
+  dplyr::slice(leaf_4_ids) %>%
+  mutate(
+    id = leaf_4_ids,
+    across(c(gr_liv_area, lot_area), scales::comma)
+  ) %>%
+  select(
+    ID = id, `Livable Area` = gr_liv_area, `Lot Area` = lot_area,
+    `Year Built` = year_built, Condition = overall_cond,
+    Neighborhood = neighborhood
+  ) %>%
+  mutate(
+    `Pred. Value` = scales::dollar(predict(
+      ames_fit_eng,
+      data = as.matrix(ames_test_prep[leaf_4_ids, ]),
+      num_iteration = 1
+    ), accuracy = 1)
+  )
+
+for (i in seq_len(10)) {
+  ames_example_comps1[i, 7] <- paste0(
+    "<span style='background-color:plum'>",
+    ames_example_comps1[i, 7],
+    "</span>"
+  )
+}
+
+ames_example_comps1 %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1:10, background = "thistle", align = "right")
+```
+
+All of these properties follow the same purple path through the tree and end up receiving the same predicted value from <span style='background-color:plum'><strong>Leaf 4</strong></span>. However, their characteristics aren't actually very comparable. They have vastly different lot areas and ages. Any appraiser seeing these comps would probably laugh at you. 
+
+So what's the issue? Why aren't our properties in the same leaf node actually comparable? It's because our model is too simple. It doesn't yet have enough rules to distinguish a house built in 1959 from one built in 2008. We can solve this by adding more <span style="background-color:#F5F5DC"><strong>splits</strong></span> to our single tree, by adding more trees, or by doing both.
 
 ## How LightGBM Works
+
+In practice, frameworks like LightGBM don't use just one decision tree. Instead, they combine many decision trees together, either by taking the average or adding their results. This can create incredibly complex rulesets that are difficult for humans to follow, but which lead to much better predictions. Let's extend our decision tree from before with an additional tree. 
+
+**Tree 0** is the same as before, and the purple path shows the rules followed by our target property (ID = 2). 
 
 #### Ames Housing Data: Tree 0
 
@@ -278,17 +334,23 @@ ames_tree_0 %>%
   render_graph(as_svg = TRUE)
 ```
 
+<br>
+
+**Tree 1** is a new tree. The target property still follows the purple path, but notice the new values at each split and leaf. These values are substantially less than the values from **Tree 0**. That's because they are _added_ to **Tree 0**'s results. Using LightGBM, the final predicted value for a given property is the _sum of predicted values from all trees_. In the case of our target property, the final predicted value is $187,627.
+
 #### Ames Housing Data: Tree 1
 
 ```{r}
 ames_tree_1 <- lgb.plot.tree(ames_fit_eng, 1)
 ames_tree_1 %>%
   set_node_attrs(fillcolor, "thistle", c(21, 11, 10, 8)) %>%
-  set_node_attrs(fillcolor, "plum", c(7)) %>%
+  set_node_attrs(fillcolor, "lightpink", c(7)) %>%
+  set_node_attrs(fillcolor, "sandybrown", c(6)) %>%
+  set_node_attrs(fillcolor, "paleturquoise", c(9)) %>%
   render_graph(as_svg = TRUE)
 ```
 
-
+<br>
 
 ```{r}
 ames_example_lgb <- ames_test_prep %>%
@@ -317,27 +379,316 @@ ames_example_lgb <- ames_test_prep %>%
       `Pred. Value (Final)` - `Pred. Value (Tree 0)`
   ) %>%
   dplyr::relocate(`Pred. Value (Final)`, .after = everything()) %>%
-  mutate(
-    across(starts_with("Pred."), ~ scales::dollar(.x, accuracy = 1)),
-    `Pred. Value (Tree 1)` = paste("+", `Pred. Value (Tree 1)`)
-  )
+  mutate(across(starts_with("Pred."), ~ scales::dollar(.x, accuracy = 1)))
 
 ames_example_lgb[1, 7] <- paste0("<span style='background-color:plum'>", ames_example_lgb[1, 7], "</span>")
-ames_example_lgb[1, 8] <- paste0("<span style='background-color:plum'>", ames_example_lgb[1, 8], "</span>")
+ames_example_lgb[1, 8] <- paste0("<span style='background-color:lightpink'>", ames_example_lgb[1, 8], "</span>")
 ames_example_lgb %>%
   dplyr::slice(1) %>%
   kbl("html", align = "c", escape = FALSE) %>%
   kable_classic(html_font = "sans-serif") %>%
   row_spec(1, background = "thistle", align = "right") %>%
-  column_spec(9, background = "plum")
+  column_spec(9, background = "#d9d9d9")
+```
+
+What about our comparables from earlier? Like before, they all share the same first leaf node (in **Tree 0**), but now they start to differ in the second tree. The newest property (ID = 55) receives a higher final value and the property with the smallest livable area (ID = 84) receives a lower final value.
+
+```{r}
+ames_example_comps2 <- ames_test_prep %>%
+  dplyr::slice(leaf_4_ids) %>%
+  mutate(
+    id = leaf_4_ids,
+    across(c(gr_liv_area, lot_area), scales::comma)
+  ) %>%
+  select(
+    ID = id, `Livable Area` = gr_liv_area, `Lot Area` = lot_area,
+    `Year Built` = year_built, Condition = overall_cond,
+    Neighborhood = neighborhood
+  ) %>%
+  mutate(
+    `Pred. Value (Tree 0)` = predict(
+      ames_fit_eng,
+      data = as.matrix(ames_test_prep[leaf_4_ids, ]),
+      num_iteration = 1
+    ),
+    `Pred. Value (Final)` = predict(
+      ames_fit_eng,
+      data = as.matrix(ames_test_prep[leaf_4_ids, ]),
+      num_iteration = 2
+    ),
+    `Pred. Value (Tree 1)` =
+      `Pred. Value (Final)` - `Pred. Value (Tree 0)`
+  ) %>%
+  dplyr::relocate(`Pred. Value (Final)`, .after = everything()) %>%
+  mutate(across(starts_with("Pred."), ~ scales::dollar(.x, accuracy = 1)))
+
+for (i in seq_len(10)) {
+  ames_example_comps2[i, 7] <- paste0(
+    "<span style='background-color:plum'>",
+    ames_example_comps2[i, 7],
+    "</span>"
+  )
+}
+for (i in c(1:4, 6:9)) {
+  ames_example_comps2[i, 8] <- paste0(
+    "<span style='background-color:lightpink'>",
+    ames_example_comps2[i, 8],
+    "</span>"
+  )
+}
+ames_example_comps2[5, 8] <- paste0("<span style='background-color:sandybrown'>", ames_example_comps2[5, 8], "</span>")
+ames_example_comps2[10, 8] <- paste0("<span style='background-color:paleturquoise'>", ames_example_comps2[10, 8], "</span>")
+
+ames_example_comps2 %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1:10, background = "thistle", align = "right") %>%
+  column_spec(9, background = "#d9d9d9")
+```
+
+Properties that match the target property in _both trees_ will be more similar than ones that match in just one tree. In this case, all properties that landed in <span style="background-color:lightpink"><strong>Leaf 4</strong></span> will be most comparable to our target (ID = 2). 
+
+However, as more trees are added, the number of properties that share all their leaf nodes with the target will shrink rapidly. Here's what happens to our target and comparable properties if we add 10 trees to the model.
+
+The <span style="background-color:lightgreen"><strong>green cells</strong></span> below show leaf nodes shared with the target property. Note that by the final tree, there are _no comparable properties_ that share all the target's leaf nodes.
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
+ames_model_10 <- parsnip::boost_tree(trees = 10) %>%
+  set_mode("regression") %>%
+  set_engine(
+    engine = "lightgbm",
+    seed = qmd_seed,
+    deterministic = TRUE,
+    categorical_feature = c("overall_cond", "neighborhood"),
+    num_leaves = 11
+  )
+
+ames_wflow_10 <- workflow() %>%
+  add_model(ames_model_10) %>%
+  add_recipe(
+    recipe = ames_recp,
+    blueprint = hardhat::default_recipe_blueprint(allow_novel_levels = TRUE)
+  )
+
+ames_fit_10 <- parsnip::fit(ames_wflow_10, ames_train)
+ames_fit_eng_10 <- parsnip::extract_fit_engine(ames_fit_10)
+```
+
+```{r}
+predict(
+  ames_fit_eng_10,
+  data = as.matrix(ames_test_prep[2, ]),
+  predleaf = TRUE
+) %>%
+  as_tibble() %>%
+  mutate(ID = 2) %>%
+  pivot_longer(starts_with("V")) %>%
+  mutate(tree = readr::parse_number(name) - 1) %>%
+  left_join(
+    lgb.model.dt.tree(ames_fit_eng_10) %>%
+      select(tree_index, leaf_index, leaf_value),
+    by = c("tree" = "tree_index", "value" = "leaf_index")
+  ) %>%
+  select(-name, -value) %>%
+  mutate(leaf_value = scales::dollar(leaf_value, accuracy = 1)) %>%
+  pivot_wider(
+    id_cols = "ID",
+    names_from = "tree",
+    values_from = "leaf_value",
+    names_prefix = "Tree "
+  ) %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1, background = "lightgreen", align = "right")
+```
+
+```{r}
+ames_comps_values <- predict(
+  ames_fit_eng_10,
+  data = as.matrix(ames_test_prep[leaf_4_ids, ]),
+  predleaf = TRUE
+) %>%
+  as_tibble() %>%
+  mutate(ID = leaf_4_ids) %>%
+  pivot_longer(starts_with("V")) %>%
+  mutate(tree = readr::parse_number(name) - 1) %>%
+  left_join(
+    lgb.model.dt.tree(ames_fit_eng_10) %>%
+      select(tree_index, leaf_index, leaf_value),
+    by = c("tree" = "tree_index", "value" = "leaf_index")
+  ) %>%
+  select(-name, -value) %>%
+  mutate(leaf_value = scales::dollar(leaf_value, accuracy = 1)) %>%
+  pivot_wider(
+    id_cols = "ID",
+    names_from = "tree",
+    values_from = "leaf_value",
+    names_prefix = "Tree "
+  )
+
+shared_nodes <- tibble(
+  y = c(rep(1, 10), rep(2, 8), rep(3, 4), rep(4, 4), rep(5, 4), rep(6, 3)) + 1,
+  x = c(1:10, c(1:4, 6:9), c(1, 8:10), c(1, 8:10), c(1, 8:10), c(1, 8, 10))
+)
+
+for (i in seq_len(nrow(shared_nodes))) {
+  ames_comps_values[shared_nodes$x[[i]], shared_nodes$y[[i]]] <- paste0(
+    "<span style='background-color:lightgreen'>",
+    ames_comps_values[shared_nodes$x[[i]], shared_nodes$y[[i]]],
+    "</span>"
+  )
+}
+
+ames_comps_values %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1:10, align = "right")
+```
+
+Given that individual properties are unlikely to share _all_ of their leaf nodes with a target property, we need a way to extract comparability that doesn't rely on perfect matching.
+
+## Quantifying Comparables
+
+Now that we've seen how LightGBM trees are structured, we can use them to create a "similarity score." This score is simply the percentage of shared leaf nodes between a target and comparable property, weighted by the importance of each tree.
+
+Let's see it in action. Here is the same green table from above, but with predicted values replaced by a boolean (<span style="background-color:lightgreen"><strong>T</strong></span>) when the property shares the same leaf node as the target within each tree. The rightmost columns show the number and percentage of leaf nodes shared with the target.
+
+```{r, message=FALSE}
+predict(
+  ames_fit_eng_10,
+  data = as.matrix(ames_test_prep[2, ]),
+  predleaf = TRUE
+) %>%
+  bind_cols(
+    tibble(ID = 2),
+    .
+  ) %>%
+  set_names(c("ID", paste0("Tree ", 0:9))) %>%
+  mutate(`Number` = " - ", `Percent` = " - ") %>%
+  mutate(across(everything(), as.character)) %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1, background = "lightgreen", align = "right") %>%
+  column_spec(12:13, background = "#d9d9d9")
+
+ames_comps_ids <- bind_cols(
+  tibble(ID = leaf_4_ids),
+  matrix("F", nrow = 10, ncol = 10)
+) %>%
+  set_names(c("ID", paste0("Tree ", 0:9))) %>%
+  mutate(across(everything(), as.character)) %>%
+  mutate(
+    `Number` = c(6, 2, 2, 2, 1, 2, 2, 6, 5, 6),
+    `Percent` = scales::percent(`Number` / 10, accuracy = 1),
+    `Number` = paste0(`Number`, " / 10")
+  )
+
+shared_nodes <- tibble(
+  y = c(rep(1, 10), rep(2, 8), rep(3, 4), rep(4, 4), rep(5, 4), rep(6, 3)) + 1,
+  x = c(1:10, c(1:4, 6:9), c(1, 8:10), c(1, 8:10), c(1, 8:10), c(1, 8, 10))
+)
+
+for (i in seq_len(nrow(shared_nodes))) {
+  ames_comps_ids[shared_nodes$x[[i]], shared_nodes$y[[i]]] <- paste0(
+    "<span style='background-color:lightgreen'><strong>T</strong></span>"
+  )
+}
+
+ames_comps_ids %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1:10, align = "right") %>%
+  column_spec(12:13, background = "#d9d9d9")
+```
+
+The observations with a high percentage of shared leaf nodes _should_ be most comparable to the target property. However, this assumes that all trees in the model are weighted equally, which is rarely the case. In LightGBM, trees typically have diminishing importance, i.e. each successive tree has less impact on the overall error of the model. To find accurate comparables, we need to quantify each tree's importance and use it to weight each leaf node match.
+
+Here is a simple function to determine tree importance based on how much each tree contributes to the overall decrease in model error. We can apply it to our training data to get weights for each tree.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+get_weights <- function(metric, model, train, outcome_col, num_trees) {
+  model$params$metric <- list(metric)
+  train_lgb <- lgb.Dataset(as.matrix(train), label = train[[outcome_col]])
+
+  trained_model <- lgb.train(
+    params = model$params,
+    data = train_lgb,
+    valids = list(test = train_lgb),
+    nrounds = num_trees
+  )
+
+  # Get the initial error for base model before first tree
+  # this NEEDS to be after the model is trained (or else it won't train correctly)
+  set_field(train_lgb, "init_score", as.matrix(train[[outcome_col]]))
+  initial_predictions <- get_field(train_lgb, "init_score")
+  init_score <- mean(initial_predictions)
+
+  # Index into the errors list, and un-list so it is a flat/1dim list
+  errors <- unlist(trained_model$record_evals$test[[metric]]$eval)
+  errors <- c(init_score, errors)
+  diff_in_errors <- diff(errors, 1, 1)
+
+  # Take proportion of diff in errors over total diff in errors from all trees
+  weights <- diff_in_errors / sum(diff_in_errors)
+
+  return(weights)
+}
+
+# Prepare data using a tidymodels recipe
+ames_train_prep <- bake(prep(ames_recp), ames_train)
+
+# Get the decrease in error caused by each successive tree
+ames_tree_weights <- get_weights(
+  metric = "rmse",
+  model = ames_fit_eng_10,
+  train = ames_train_prep,
+  outcome_col = "sale_price",
+  num_trees = 10
+)
+```
+
+```{r}
+ames_tree_weights %>%
+  t() %>%
+  as_tibble() %>%
+  bind_cols(tibble(Tree = "Weight"), .) %>%
+  set_names(c("-", paste0("Tree ", 0:9))) %>%
+  mutate(across(starts_with("Tree "), ~ scales::percent(.x, accuracy = 0.1))) %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1, align = "right")
+```
+
+These weights are then multiplied row-wise by the boolean matching matrix from above. The final similarity score for our target property (ID = 2) is the _sum of each comparable row_.
+
+```{r, message=FALSE}
+ames_final_matrix <- matrix(FALSE, nrow = 10, ncol = 10)
+
+for (i in seq_len(nrow(shared_nodes))) {
+  ames_final_matrix[shared_nodes$x[[i]], shared_nodes$y[[i]] - 1] <- TRUE
+}
+
+(t(ames_final_matrix) * ames_tree_weights) %>%
+  t() %>%
+  bind_cols(
+    tibble(ID = leaf_4_ids),
+    .
+  ) %>%
+  set_names(c("ID", paste0("Tree ", 0:9))) %>%
+  mutate(
+    `Sim. Score` = rowSums(across(starts_with("Tree "))),
+    across(starts_with("Tree "), ~ scales::percent(.x, accuracy = 0.1)),
+    `Sim. Score` = scales::percent(`Sim. Score`, accuracy = 0.01)
+  ) %>%
+  kbl("html", align = "c", escape = FALSE) %>%
+  kable_classic(html_font = "sans-serif") %>%
+  row_spec(1:10, align = "right") %>%
+  column_spec(12, background = "#d9d9d9")
 ```
 
 
-- How decision trees work
 
-- How the data gets saved (as a matrix)
-
-## Finding comps
-
-- Finding the most comparable property
-- Doing it at scale
+- Transform into matrix
+- Add more trees
+- Percent matchin = more comparable
+- Weight by tree importance
