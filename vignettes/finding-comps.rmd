@@ -205,7 +205,7 @@ ames_tree_0 %>%
 
 <br>
 
-Each <span style="background-color:#F5F5DC"><strong>split</strong></span> has a _property variable_ (`gr_liv_area`) and a _rule_ (`<= 1224.5`). The **bold** arrow points to the node you should go to when the rule is true about a given property. For example, at Split 4 in the tree above, properties with a living area of less than `1224.5` should proceed to Split 9.
+Each <span style="background-color:#F5F5DC"><strong>split</strong></span> has a _property variable_ (i.e. `gr_liv_area`) and a _rule_ (`<= 1224.5`). The **bold** arrow points to the node you should go to when the rule is true about a given property. For example, at Split 4 in the tree above, properties with a living area of less than `1224.5` should proceed to Split 9.
 
 Each <span style="background-color:#F0E68C"><strong>leaf</strong></span> shows the value a property will get from the tree after going through all the splits. For example, the Ames property below (ID = 2) follows the purple path through through the tree based on its characteristics. Its predicted value from the tree is $184,306, as shown at the terminal leaf node (<span style='background-color:plum'><strong>Leaf 4</strong></span>).
 
@@ -708,7 +708,7 @@ ames_tree_weights %>%
   row_spec(1, align = "right")
 ```
 
-These weights are then multiplied row-wise by the boolean matching matrix from above. The final similarity score for our target property (ID = 2) is the _sum of each comparable row_.
+These weights are then multiplied row-wise by the boolean matching matrix from above. This means that for each tree and comparable, the weight value is either kept (when matching / `TRUE`) or zeroed out (when not matching / `FALSE`). The final similarity score for our target property (ID = 2) is the _sum of each comparable row_.
 
 ```{r, message=FALSE}
 ames_final_matrix <- matrix(FALSE, nrow = 10, ncol = 10)
