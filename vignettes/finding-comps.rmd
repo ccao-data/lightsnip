@@ -3,8 +3,14 @@ title: "Finding comparables with LightGBM"
 format: html
 ---
 
+```{css, echo=FALSE}
+table {
+  display: table !important; 
+}
+```
+
 ```{r opts, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, out.width = "100%")
 ```
 
 ```{r setup, message=FALSE, warning=FALSE}
@@ -598,7 +604,7 @@ predict(
     .
   ) %>%
   set_names(c("ID", paste0("Tree ", 0:9))) %>%
-  mutate(`Number` = " - ", `Percent` = " - ") %>%
+  mutate(`Number` = "", `Percent` = "") %>%
   mutate(across(everything(), as.character)) %>%
   kbl("html", align = "c", escape = FALSE) %>%
   kable_classic(html_font = "sans-serif") %>%
@@ -742,7 +748,7 @@ Now we can simply sort by similarity score to get the observations most similar 
 ```{r}
 ames_example_props %>%
   dplyr::slice(1) %>%
-  mutate(`Sim. Score` = " - ") %>%
+  mutate(`Sim. Score` = "") %>%
   select(-`Pred. Value`) %>%
   kbl("html", align = "c", escape = FALSE) %>%
   kable_classic(html_font = "sans-serif") %>%
