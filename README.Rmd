@@ -68,7 +68,9 @@ Here is a quick example using `lightsnip` with a Tidymodels cross-validation wor
 library(dplyr)
 library(lightgbm)
 library(lightsnip)
-library(tidymodels)
+library(parsnip)
+library(recipes)
+library(workflows)
 
 # Create a dataset for training
 mtcars_train <- mtcars %>%

@@ -21,9 +21,13 @@ library(dplyr)
 library(kableExtra)
 library(lightgbm)
 library(lightsnip)
+library(parsnip)
+library(purrr)
+library(recipes)
 library(scales)
 library(snakecase)
-library(tidymodels)
+library(tidyr)
+library(workflows)
 
 # Function to plot LightGBM trees. Sourced originally from:
 # https://github.com/microsoft/LightGBM/issues/1222#issuecomment-1134401696
