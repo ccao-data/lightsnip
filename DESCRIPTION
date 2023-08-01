@@ -3,7 +3,8 @@ Type: Package
 Title: LightGBM Model Engine for Parsnip
 Version: 0.0.6
 Authors@R: c(
-    person(given = "Dan", family = "Snow", email="daniel.snow@cookcountyil.gov", role=c("aut", "cre"))
+    person(given = "Dan", family = "Snow", email="daniel.snow@cookcountyil.gov", role=c("aut", "cre")),
+    person(given = "Claire", family = "Boyd", role=c("ctb"))
   )
 Date: 2023-07-04
 Description: Provides an expanded LightGBM engine for the parsnip package.

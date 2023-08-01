@@ -1,6 +1,14 @@
 destination: public
 url: https://ccao-data.github.io/lightsnip/
 
+authors:
+  sidebar:
+    roles: [aut, ctb]
+  Dan Snow:
+    href: https://github.com/dfsnow
+  Claire Boyd:
+    href: https://github.com/claireboyd
+
 reference:
 
 - title: Functions
