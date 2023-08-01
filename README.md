@@ -66,7 +66,9 @@ cross-validation workflow:
 library(dplyr)
 library(lightgbm)
 library(lightsnip)
-library(tidymodels)
+library(parsnip)
+library(recipes)
+library(workflows)
 
 # Create a dataset for training
 mtcars_train <- mtcars %>%
@@ -134,7 +136,7 @@ mtcars_test %>%
 
 |                | actual_mpg | pred_mpg |
 |:---------------|-----------:|---------:|
-| Ford Pantera L |       15.8 |    13.72 |
-| Ferrari Dino   |       19.7 |    21.29 |
-| Maserati Bora  |       15.0 |    13.65 |
-| Volvo 142E     |       21.4 |    22.04 |
+| Ford Pantera L |       15.8 |    14.08 |
+| Ferrari Dino   |       19.7 |    21.20 |
+| Maserati Bora  |       15.0 |    13.72 |
+| Volvo 142E     |       21.4 |    22.12 |
