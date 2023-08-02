@@ -4,6 +4,7 @@ Title: LightGBM Model Engine for Parsnip
 Version: 0.0.6
 Authors@R: c(
     person(given = "Dan", family = "Snow", email="daniel.snow@cookcountyil.gov", role=c("aut", "cre")),
+    person(given = "Nicole", family = "Jardine", email="nicole.jardine@cookcountyil.gov", role=c("aut", "ctb")),
     person(given = "Claire", family = "Boyd", role=c("ctb"))
   )
 Date: 2023-07-04
