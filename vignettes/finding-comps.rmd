@@ -188,13 +188,13 @@ ames_tree_0 <- lgb.plot.tree(ames_fit_eng, 0)
 
 The [Cook County Assessor's Office (CCAO)](https://www.cookcountyassessor.com/) uses LightGBM for its [residential](https://github.com/ccao-data/model-res-avm) and [condominium](https://github.com/ccao-data/model-condo-avm) valuation models. [LightGBM](https://github.com/microsoft/LightGBM) is a machine learning framework that works by iteratively growing many [decision trees](https://en.wikipedia.org/wiki/Decision_tree). It is especially suited to data with many categorical variables and complex interactions, such as housing data.
 
-However, LightGBM is also complicated. Its outputs can be difficult to explain and interpret, especially as model complexity grows. Techniques such as [SHAP values](https://github.com/shap/shap) can help, but aren't inuitive to the average person.
+However, LightGBM is also complicated. Its outputs can be difficult to explain and interpret, especially as model complexity grows. Techniques such as [SHAP values](https://github.com/shap/shap) can help, but aren't intuitive to the average person.
 
-This vignette outlines a novel technique to explain LightGBM outputs specifically for housing data. The technique finds [comparable properties](https://www.investopedia.com/terms/c/comparables.asp) by exploiting the tree structure of a trained LightGBM model. Its goal is to help diagnose model issues and answer a common question from property owners, "What comparables did you use to value my property?"
+This vignette outlines a novel technique to explain LightGBM outputs specifically for housing data. The technique finds [comparable sales](https://www.investopedia.com/terms/c/comparables.asp) from the model training data by exploiting the tree structure of a LightGBM model. Its goal is to help diagnose model issues and answer a common question from property owners, "What comparable sales did you use to value my property?"
 
 ## How Decision Trees Work
 
-To understand the comparable (comp) finding technique, you must first understand how decision trees determine a property's value. Below is a simple decision tree trained on the [Ames Housing Dataset](https://www.tmwr.org/ames.html). It is made up of rectangular <span style="background-color:#F5F5DC"><strong>splits</strong></span> and oval <span style="background-color:#F0E68C"><strong>leaves</strong></span>. 
+To understand the comparable sale (comp) finding technique, you must first understand how decision trees determine a property's value. Below is a simple decision tree trained on the [Ames Housing Dataset](https://www.tmwr.org/ames.html). The training processes uses sales data to discover patterns in how property variables, like `neighborhood` and `gr_liv_area`, contribute to sale price. Once trained, the tree can be used to predict a property's value, even if that property hasn't sold. Let's see how.
 
 #### Ames Housing Data: Example Decision Tree
 
@@ -205,7 +205,9 @@ ames_tree_0 %>%
 
 <br>
 
-Each <span style="background-color:#F5F5DC"><strong>split</strong></span> has a _property variable_ (i.e. `gr_liv_area`) and a _rule_ (`<= 1224.5`). The **bold** arrow points to the node you should go to when the rule is true about a given property. For example, at Split 4 in the tree above, properties with a living area of less than `1224.5` should proceed to Split 9.
+This tree is made up of rectangular <span style="background-color:#F5F5DC"><strong>splits</strong></span> and oval <span style="background-color:#F0E68C"><strong>leaves</strong></span>. 
+
+Each <span style="background-color:#F5F5DC"><strong>split</strong></span> has a _property variable_ (i.e. `gr_liv_area`) and a _rule_ (i.e. `<= 1224.5`). The **bold** arrow points to the node you should go to when the rule is true about a given property. For example, at Split 4 in the tree above, properties with a living area of less than `1224.5` should proceed to Split 9.
 
 Each <span style="background-color:#F0E68C"><strong>leaf</strong></span> shows the value a property will get from the tree after going through all the splits. For example, the Ames property below (ID = 2) follows the purple path through through the tree based on its characteristics. Its predicted value from the tree is $184,306, as shown at the terminal leaf node (<span style='background-color:plum'><strong>Leaf 4</strong></span>).
 
@@ -258,6 +260,7 @@ ames_tree_0 %>%
   set_node_attrs(fillcolor, "plum", c(9)) %>%
   render_graph(as_svg = TRUE)
 ```
+
 <br><br>
 
 Other properties may have a different path through the tree. Below, property number 75 takes the green path through the tree and receives a predicted value of $195,367.
@@ -290,9 +293,9 @@ ames_tree_0 %>%
 
 <br>
 
-The process of "predicting" with a decision tree is just running each property through the rules established by the splits. Properties with similar split outcomes will also have similar characteristics and will end up in the same leaf node of the tree. As such, extracting comparables from a single tree is simple: just find all the properties that share a leaf node with your target property.
+The process of "predicting" with a decision tree is just running each property through the rules established by the splits. Properties with similar split outcomes will also have similar characteristics and will end up in the same leaf node of the tree. As such, extracting comparable sales from the training data of single tree is simple: just find all the properties that share a leaf node with your target property.
 
-Let's use the property with ID = 2 as our target. As we saw above, it ends up in <span style='background-color:plum'><strong>Leaf 4</strong></span>. Here are some comparables from the same leaf node:
+Let's use the property with ID = 2 as our target. As we saw above, it ends up in <span style='background-color:plum'><strong>Leaf 4</strong></span>. Here are some comparable sales from the same leaf node:
 
 ```{r, warning=FALSE}
 leaf_4_ids <- predict(
@@ -340,7 +343,7 @@ ames_example_comps1 %>%
   row_spec(1:10, background = "thistle", align = "right")
 ```
 
-All of these properties follow the same purple path through the tree and end up receiving the same predicted value from <span style='background-color:plum'><strong>Leaf 4</strong></span>. However, their characteristics aren't actually very comparable. They have vastly different lot areas and ages. Any appraiser seeing these comps would probably laugh at you. 
+All of these properties follow the same purple path through the tree and end up receiving the same predicted value from <span style='background-color:plum'><strong>Leaf 4</strong></span>. However, their characteristics aren't actually very comparable. They have vastly different lot areas and ages. Any appraiser seeing these comps would probably laugh at you.
 
 So what's the issue? Why aren't our properties in the same leaf node actually comparable? It's because our model is too simple. It doesn't yet have enough rules to distinguish a house built in 1959 from one built in 2008. We can solve this by adding more <span style="background-color:#F5F5DC"><strong>splits</strong></span> to our single tree, by adding more trees, or by doing both.
 
@@ -348,7 +351,7 @@ So what's the issue? Why aren't our properties in the same leaf node actually co
 
 In practice, frameworks like LightGBM don't use just one decision tree. Instead, they combine many decision trees together, either by taking the average or adding their results. This can create incredibly complex rulesets that are difficult for humans to follow, but which lead to much better predictions. Let's extend our decision tree from before with an additional tree. 
 
-**Tree 0** is the same as before. and the purple path shows the rules followed by our target property (ID = 2). 
+**Tree 0** is the same as before, and the purple path shows the rules followed by our target property (ID = 2). 
 
 #### Ames Housing Data: Tree 0
 
@@ -427,7 +430,7 @@ ames_example_lgb %>%
   column_spec(9, background = "#d9d9d9")
 ```
 
-What about our comparables from earlier? Like before, they all share the same first leaf node (in **Tree 0**), but now they start to differ in the second tree. The newest property (ID = 55) receives a higher final value and the property with the smallest livable area (ID = 84) receives a lower final value.
+What about our comparable sales from earlier? Like before, they all share the same first leaf node (in **Tree 0**), but now they start to differ in the second tree. The newest property (ID = 55) receives a higher final value and the property with the smallest livable area (ID = 84) receives a lower final value.
 
 ```{r}
 ames_example_comps2 <- ames_test_prep %>%
@@ -492,9 +495,9 @@ ames_example_comps2 %>%
 
 Properties that match the target property in _both trees_ will be more similar than ones that match in just one tree. In this case, all properties that landed in <span style="background-color:lightpink"><strong>Leaf 4</strong></span> will be most comparable to our target (ID = 2). 
 
-However, as more trees are added, the number of properties that share all their leaf nodes with the target will shrink rapidly. Here's what happens to our target and comparable properties if we add 10 trees to the model.
+However, as more trees are added, the number of properties that share all their leaf nodes with the target will shrink rapidly. Here's what happens to our target and comparable sold properties if we add 10 trees to the model.
 
-The <span style="background-color:lightgreen"><strong>green cells</strong></span> below show leaf nodes shared with the target property. Note that by the final tree, there are _no comparable properties_ that share all the target's leaf nodes.
+The <span style="background-color:lightgreen"><strong>green cells</strong></span> below show leaf nodes shared with the target property. Note that by the final tree, there are _no comparable sales_ that share all the target's leaf nodes.
 
 ```{r, warning=FALSE, message=FALSE, results='hide'}
 ames_model_10 <- parsnip::boost_tree(trees = 10) %>%
@@ -708,7 +711,7 @@ ames_tree_weights %>%
   row_spec(1, align = "right")
 ```
 
-These weights are then multiplied row-wise by the boolean matching matrix from above. This means that for each tree and comparable, the weight value is either kept (when matching / `TRUE`) or zeroed out (when not matching / `FALSE`). The final similarity score for our target property (ID = 2) is the _sum of each comparable row_.
+These weights are then multiplied row-wise by the boolean matching matrix from above. This means that for each tree and comparable sale, the weight value is either kept (when matching / `TRUE`) or zeroed out (when not matching / `FALSE`). The final similarity score for our target property (ID = 2) is the _sum of each comparable row_.
 
 ```{r, message=FALSE}
 ames_final_matrix <- matrix(FALSE, nrow = 10, ncol = 10)
@@ -752,12 +755,21 @@ Now we can simply sort by similarity score to get the observations most similar 
 ```{r}
 ames_example_props %>%
   dplyr::slice(1) %>%
-  mutate(`Sim. Score` = "") %>%
+  bind_cols(
+    ames_test %>%
+      dplyr::slice(2) %>%
+      select(sale_price)
+  ) %>%
+  mutate(
+    `Sim. Score` = "",
+    sale_price = scales::dollar(sale_price, accuracy = 1)
+  ) %>%
+  rename(`Sale Price` = sale_price) %>%
   select(-`Pred. Value`) %>%
   kbl("html", align = "c", escape = FALSE) %>%
   kable_classic(html_font = "sans-serif") %>%
   row_spec(1, align = "right") %>%
-  column_spec(7, background = "#d9d9d9")
+  column_spec(7:8, background = "#d9d9d9")
 
 ames_test_prep %>%
   dplyr::slice(leaf_4_ids) %>%
@@ -770,18 +782,27 @@ ames_test_prep %>%
     `Year Built` = year_built, Condition = overall_cond,
     Neighborhood = neighborhood
   ) %>%
-  mutate(`Sim. Score` = ames_final_matrix_fmt$`Sim. Score`) %>%
+  bind_cols(
+    ames_test %>%
+      dplyr::slice(leaf_4_ids) %>%
+      select(sale_price)
+  ) %>%
+  mutate(
+    `Sim. Score` = ames_final_matrix_fmt$`Sim. Score`,
+    sale_price = scales::dollar(sale_price, accuracy = 1)
+  ) %>%
+  rename(`Sale Price` = sale_price) %>%
   arrange(desc(`Sim. Score`)) %>%
   kbl("html", align = "c", escape = FALSE) %>%
   kable_classic(html_font = "sans-serif") %>%
   row_spec(1:10, align = "right") %>%
-  column_spec(7, background = "#d9d9d9")
+  column_spec(7:8, background = "#d9d9d9")
 ```
 
 Now we're talking! Properties 3 and 62 are nearly identical to our target property, while 60 and 61 aren't too similar. But what about property 55? It looks fairly similar to our target, but has the lowest similarity score.
 
-Property 55 reveals another advantage of this approach to finding comparables: variables get implicitly weighted by their importance. Variables that aren't predictive in the LightGBM model are _less likely to appear in splits_ and are therefore less likely to determine whether two properties share a terminal leaf node. In the case of property 55, `Year Built` is an important predictor of value and appears in many splits, so it receives a low similarity score due to the large difference in age compared to the target.
+Property 55 reveals another advantage of this approach to finding comparable sales: variables get implicitly weighted by their importance. Variables that aren't predictive in the LightGBM model are _less likely to appear in splits_ and are therefore less likely to determine whether two properties share a terminal leaf node. In the case of property 55, `Year Built` is an important predictor of value and appears in many splits, so it receives a low similarity score due to the large difference in age compared to the target.
 
 The comparables finding approach does have some disadvantages. Mainly, it requires you to generate a boolean matching matrix for _every target property_ to _every possible comparable_. This many-to-many relationship quickly blows up the compute required for comp finding, particularly for large/complex models. However, with some clever coding, this isn't too hard to work around.
 
-Overall, this approach is robust, relatively intuitive, and delivers good comparables that will finally let us answer the question, “What comparables did you use to value my property?”
+Overall, this approach is robust, relatively intuitive, and delivers good comparables that will finally let us answer the question, “What comparable sales did you use to value my property?”
