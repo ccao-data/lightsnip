@@ -272,7 +272,6 @@ pred_lgb_reg_num <- function(object, new_data, ...) {
   stats::predict(
     object$fit,
     as.matrix(new_data),
-    reshape = TRUE,
     params = list(predict_disable_shape_check = TRUE),
     ...
   )
