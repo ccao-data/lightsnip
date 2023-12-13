@@ -234,7 +234,7 @@ ames_example_props <- ames_test_prep %>%
   mutate(
     `Pred. Value` = scales::dollar(predict(
       ames_fit_eng,
-      data = as.matrix(ames_test_prep[c(example_prop_1, example_prop_2), ]),
+      newdata = as.matrix(ames_test_prep[c(example_prop_1, example_prop_2), ]),
       num_iteration = 1
     ), accuracy = 1)
   )
@@ -300,9 +300,9 @@ Let's use the property with ID = 2 as our target. As we saw above, it ends up in
 ```{r, warning=FALSE}
 leaf_4_ids <- predict(
   ames_fit_eng,
-  data = as.matrix(ames_test_prep),
+  newdata = as.matrix(ames_test_prep),
   num_iteration = 1,
-  predleaf = TRUE
+  type = "leaf"
 ) %>%
   as_tibble() %>%
   mutate(id = row_number()) %>%
@@ -324,7 +324,7 @@ ames_example_comps1 <- ames_test_prep %>%
   mutate(
     `Pred. Value` = scales::dollar(predict(
       ames_fit_eng,
-      data = as.matrix(ames_test_prep[leaf_4_ids, ]),
+      newdata = as.matrix(ames_test_prep[leaf_4_ids, ]),
       num_iteration = 1
     ), accuracy = 1)
   )
@@ -397,12 +397,12 @@ ames_example_lgb <- ames_test_prep %>%
   mutate(
     `Pred. Value (Tree 0)` = predict(
       ames_fit_eng,
-      data = as.matrix(ames_test_prep[c(example_prop_1, example_prop_2), ]),
+      newdata = as.matrix(ames_test_prep[c(example_prop_1, example_prop_2), ]),
       num_iteration = 1
     ),
     `Pred. Value (Final)` = predict(
       ames_fit_eng,
-      data = as.matrix(ames_test_prep[c(example_prop_1, example_prop_2), ]),
+      newdata = as.matrix(ames_test_prep[c(example_prop_1, example_prop_2), ]),
       num_iteration = 2
     ),
     `Pred. Value (Tree 1)` =
@@ -447,12 +447,12 @@ ames_example_comps2 <- ames_test_prep %>%
   mutate(
     `Pred. Value (Tree 0)` = predict(
       ames_fit_eng,
-      data = as.matrix(ames_test_prep[leaf_4_ids, ]),
+      newdata = as.matrix(ames_test_prep[leaf_4_ids, ]),
       num_iteration = 1
     ),
     `Pred. Value (Final)` = predict(
       ames_fit_eng,
-      data = as.matrix(ames_test_prep[leaf_4_ids, ]),
+      newdata = as.matrix(ames_test_prep[leaf_4_ids, ]),
       num_iteration = 2
     ),
     `Pred. Value (Tree 1)` =
@@ -524,8 +524,8 @@ ames_fit_eng_10 <- parsnip::extract_fit_engine(ames_fit_10)
 ```{r}
 predict(
   ames_fit_eng_10,
-  data = as.matrix(ames_test_prep[2, ]),
-  predleaf = TRUE
+  newdata = as.matrix(ames_test_prep[2, ]),
+  type = "leaf"
 ) %>%
   as_tibble() %>%
   mutate(ID = 2) %>%
@@ -552,8 +552,8 @@ predict(
 ```{r}
 ames_comps_values <- predict(
   ames_fit_eng_10,
-  data = as.matrix(ames_test_prep[leaf_4_ids, ]),
-  predleaf = TRUE
+  newdata = as.matrix(ames_test_prep[leaf_4_ids, ]),
+  type = "leaf"
 ) %>%
   as_tibble() %>%
   mutate(ID = leaf_4_ids) %>%
@@ -603,8 +603,8 @@ Let's see it in action. Here is the same green table from above, but with predic
 ```{r, message=FALSE}
 predict(
   ames_fit_eng_10,
-  data = as.matrix(ames_test_prep[2, ]),
-  predleaf = TRUE
+  newdata = as.matrix(ames_test_prep[2, ]),
+  type = "leaf"
 ) %>%
   bind_cols(
     tibble(ID = 2),
