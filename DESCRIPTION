@@ -35,7 +35,6 @@ Suggests:
     lintr,
     modeldata,
     pkgdown,
-    purrr,
     readr,
     recipes,
     rmarkdown,
