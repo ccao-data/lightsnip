@@ -16,7 +16,7 @@ Imports:
     butcher,
     dials,
     dplyr (>= 1.0.0),
-    lightgbm (>= 3.3.0),
+    lightgbm (>= 4.2.0),
     parsnip (>= 0.1.4),
     purrr,
     rlang,
