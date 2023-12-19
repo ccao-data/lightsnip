@@ -129,6 +129,7 @@ train_lightgbm <- function(x,
                            categorical_feature = NULL,
                            weight = NULL,
                            validation = 0,
+                           valids = list(),
                            sample_type = "random",
                            early_stop = NULL,
                            max_bin = NULL,
@@ -217,6 +218,14 @@ train_lightgbm <- function(x,
       trn_index <- seq(1, max(m, 2))
       val_index <- setdiff(1:n, trn_index)
     }
+    if (length(valids) > 0) {
+      rlang::warn(
+        paste0(
+          "`validation` and `valids` are both set; overriding `valids` with ",
+          "a sample of the training data."
+        )
+      )
+    }
     valids <- list(validation = lightgbm::lgb.Dataset(
       data = as.matrix(x[val_index, , drop = FALSE]),
       label = y[val_index],
@@ -247,8 +256,10 @@ train_lightgbm <- function(x,
     verbose = verbose
   )
 
-  if (!is.null(early_stop) && validation > 0) {
+  if (length(valids) > 0) {
     main_args$valids <- quote(valids)
+  }
+  if (!is.null(early_stop) && validation > 0) {
     main_args$early_stopping_rounds <- early_stop
   }
 
