@@ -218,14 +218,6 @@ train_lightgbm <- function(x,
       trn_index <- seq(1, max(m, 2))
       val_index <- setdiff(1:n, trn_index)
     }
-    if (length(valids) > 0) {
-      rlang::warn(
-        paste0(
-          "`validation` and `valids` are both set; overriding `valids` with ",
-          "a sample of the training data."
-        )
-      )
-    }
     valids <- list(validation = lightgbm::lgb.Dataset(
       data = as.matrix(x[val_index, , drop = FALSE]),
       label = y[val_index],
@@ -238,25 +230,6 @@ train_lightgbm <- function(x,
     trn_index <- 1:n
   }
 
-  if (save_tree_error) {
-    print("Enabling save_tree_error")
-    full_valid_set <- lightgbm::lgb.Dataset(
-      data = as.matrix(x),
-      label = y,
-      categorical_feature = categorical_feature,
-      params = data_arg_list,
-      weight = weight[val_index],
-      free_raw_data = free_raw_data
-    )
-    if (exists("valids")) {
-      print("valids exists; adding tree_error to it")
-      valids$tree_errors <- full_valid_set
-    } else {
-      print("valids does not exist; creating it with tree_errors")
-      valids <- list(tree_errors = full_valid_set)
-    }
-  }
-
   d <- lightgbm::lgb.Dataset(
     data = as.matrix(x[trn_index, , drop = FALSE]),
     label = y[trn_index],
@@ -265,6 +238,18 @@ train_lightgbm <- function(x,
     weight = weight[trn_index],
     free_raw_data = free_raw_data
   )
+
+  if (save_tree_error) {
+    print("Enabling save_tree_error")
+    if (exists("valids")) {
+      print("valids exists; adding tree_errors to it")
+      valids$tree_errors <- d
+    } else {
+      print("valids does not exist; creating it with tree_errors")
+      valids <- list(tree_errors = d)
+    }
+  }
+
 
 
   ##### Train #####
