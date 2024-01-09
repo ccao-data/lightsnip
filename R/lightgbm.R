@@ -239,6 +239,7 @@ train_lightgbm <- function(x,
   }
 
   if (save_tree_error) {
+    print("Enabling save_tree_error")
     full_valid_set <- lightgbm::lgb.Dataset(
       data = as.matrix(x),
       label = y,
@@ -248,8 +249,10 @@ train_lightgbm <- function(x,
       free_raw_data = free_raw_data
     )
     if (exists("valids")) {
+      print("valids exists; adding tree_error to it")
       valids$tree_errors <- full_valid_set
     } else {
+      print("valids does not exist; creating it with tree_errors")
       valids <- list(tree_errors = full_valid_set)
     }
   }
@@ -279,6 +282,8 @@ train_lightgbm <- function(x,
     main_args$early_stopping_rounds <- early_stop
   }
 
+  print("Calling lgb.train with the following args:")
+  print(main_args)
   call <- parsnip::make_call(fun = "lgb.train", ns = "lightgbm", main_args)
   rlang::eval_tidy(call, env = rlang::current_env())
 }
