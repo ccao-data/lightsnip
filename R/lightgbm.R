@@ -129,13 +129,13 @@ train_lightgbm <- function(x,
                            categorical_feature = NULL,
                            weight = NULL,
                            validation = 0,
-                           valids = list(),
                            sample_type = "random",
                            early_stop = NULL,
                            max_bin = NULL,
                            feature_pre_filter = FALSE,
                            free_raw_data = TRUE,
                            verbose = 0,
+                           save_tree_error = FALSE,
                            ...) {
   force(x)
   force(y)
@@ -238,6 +238,22 @@ train_lightgbm <- function(x,
     trn_index <- 1:n
   }
 
+  if (save_tree_error) {
+    full_valid_set <- lightgbm::lgb.Dataset(
+      data = as.matrix(x),
+      label = y,
+      categorical_feature = categorical_feature,
+      params = data_arg_list,
+      weight = weight[val_index],
+      free_raw_data = free_raw_data
+    )
+    if (exists("valids")) {
+      valids$tree_errors <- full_valid_set
+    } else {
+      valids <- list(tree_errors = full_valid_set)
+    }
+  }
+
   d <- lightgbm::lgb.Dataset(
     data = as.matrix(x[trn_index, , drop = FALSE]),
     label = y[trn_index],
@@ -256,7 +272,7 @@ train_lightgbm <- function(x,
     verbose = verbose
   )
 
-  if (length(valids) > 0) {
+  if (exists("valids")) {
     main_args$valids <- quote(valids)
   }
   if (!is.null(early_stop) && validation > 0) {
