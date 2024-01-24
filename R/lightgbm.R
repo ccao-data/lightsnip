@@ -113,6 +113,9 @@ add_boost_tree_lightgbm <- function() {
 #'   construction, set \code{free_raw_data = FALSE}. Useful for debugging.
 #' @param verbose Integer. < 0: Fatal, = 0: Error (Warning), = 1: Info,
 #'   > 1: Debug.
+#' @param save_tree_error Boolean. Whether or not to use the training set
+#'   to compute errors for each tree that will be stored on the record_evals
+#'   attribute.
 #' @param ... Engine arguments, hyperparameters, etc. that are passed on to
 #'   \code{\link[lightgbm]{lgb.train}}.
 #'
