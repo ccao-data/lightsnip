@@ -112,6 +112,9 @@ test_that("model can be saved and loaded", {
 
   reloaded <- lgbm_load(file)
 
+  # Make sure record_evals got preserved during saving/loading
+  expect_equal(length(reloaded$fit$record_evals$tree_errors$l2$eval), 50)
+
   out <- predict(
     reloaded,
     recipes::bake(
