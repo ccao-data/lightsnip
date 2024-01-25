@@ -83,35 +83,35 @@ test_that("lightgbm alternate objective", {
 })
 
 test_that("lightgbm with save_tree_error", {
-  model <- parsnip::boost_tree(trees = 50) %>%
+  model_fit <- parsnip::boost_tree(trees = 50) %>%
     parsnip::set_engine(
       engine = "lightgbm",
-      objective = "regression", verbose = -1,
+      objective = "regression", metric = "rmse", verbose = -1,
       max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1,
       save_tree_error = TRUE
     ) %>%
-    parsnip::set_mode("regression")
+    parsnip::set_mode("regression") %>%
+    parsnip::fit(mpg ~ ., data = mtcars)
 
-  expect_regression_works(model)
-
-  # TODO: Correct comparison
-  expect_equal(model$fit$record_evals$tree_errors, data.frame())
+  expect_equal(
+    length(model_fit$fit$record_evals$tree_errors$rmse$eval),
+    50
+  )
 })
 
 test_that("lightgbm with save_tree_error and validation", {
-  model <- parsnip::boost_tree(trees = 50, stop_iter = 2) %>%
+  model_fit <- parsnip::boost_tree(trees = 50, stop_iter = 2) %>%
     parsnip::set_engine(
       engine = "lightgbm",
-      objective = "regression", verbose = -1,
+      objective = "regression", metric = "rmse", verbose = -1,
       max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1,
       save_tree_error = TRUE, validation = 0.25
     ) %>%
-    parsnip::set_mode("regression")
+    parsnip::set_mode("regression") %>%
+    parsnip::fit(mpg ~ ., data = mtcars)
 
-  expect_regression_works(model)
-
-  # TODO: Correct comparison
-  expect_equal(model$fit$record_evals$tree_errors, data.frame())
+  expect_gt(length(model_fit$fit$record_evals$tree_errors$rmse$eval), 0)
+  expect_gt(length(model_fit$fit$record_evals$validation$rmse$eval), 0)
 })
 
 test_that("lighgbm throws error", {
