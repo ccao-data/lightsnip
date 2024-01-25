@@ -270,8 +270,6 @@ train_lightgbm <- function(x,
     main_args$early_stopping_rounds <- early_stop
   }
 
-  print("Calling lgb.train with the following args:")
-  print(main_args)
   call <- parsnip::make_call(fun = "lgb.train", ns = "lightgbm", main_args)
   rlang::eval_tidy(call, env = rlang::current_env())
 }
