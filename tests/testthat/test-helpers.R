@@ -51,7 +51,9 @@ library(modeldata)
 
 # Prep lightgbm model
 model <- parsnip::boost_tree(mtry = 1, trees = 50, tree_depth = 15, min_n = 1)
-model <- parsnip::set_engine(model, "lightgbm", verbose = -1L)
+model <- parsnip::set_engine(
+  model, "lightgbm", verbose = -1L, save_tree_error = TRUE
+)
 model <- parsnip::set_mode(model, "regression")
 
 # Prep input data with recipe
