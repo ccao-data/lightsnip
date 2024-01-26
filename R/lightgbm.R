@@ -146,10 +146,6 @@ train_lightgbm <- function(x,
   force(y)
   others <- list(...)
 
-  if (save_tree_error && validation > 0) {
-    stop("`save_tree_error` cannot be `TRUE` when `validation > 0`")
-  }
-
   # Set training objective (always regression)
   if (!any(names(others) %in% c("objective"))) {
     others$num_class <- 1
@@ -249,6 +245,9 @@ train_lightgbm <- function(x,
   )
 
   if (save_tree_error) {
+    if (validation > 0) {
+      stop("`save_tree_error` cannot be `TRUE` when `validation > 0`")
+    }
     if (verbose > 0) {
       message("Enabling save_tree_error")
     }
