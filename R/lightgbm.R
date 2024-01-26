@@ -115,7 +115,9 @@ add_boost_tree_lightgbm <- function() {
 #'   > 1: Debug.
 #' @param save_tree_error Boolean. Whether or not to use the training set
 #'   to compute errors for each tree that will be stored on the record_evals
-#'   attribute.
+#'   attribute. Note that this parameter is mutually exclusive with
+#'   \code{validation} and \code{early_stop} because otherwise it can override
+#'   the set used for cross validation.
 #' @param ... Engine arguments, hyperparameters, etc. that are passed on to
 #'   \code{\link[lightgbm]{lgb.train}}.
 #'
@@ -143,6 +145,10 @@ train_lightgbm <- function(x,
   force(x)
   force(y)
   others <- list(...)
+
+  if (save_tree_error && validation > 0) {
+    stop("`save_tree_error` cannot be `TRUE` when `validation > 0`")
+  }
 
   # Set training objective (always regression)
   if (!any(names(others) %in% c("objective"))) {
@@ -243,14 +249,10 @@ train_lightgbm <- function(x,
   )
 
   if (save_tree_error) {
-    print("Enabling save_tree_error")
-    if (exists("valids")) {
-      print("valids exists; adding tree_errors to it")
-      valids$tree_errors <- d
-    } else {
-      print("valids does not exist; creating it with tree_errors")
-      valids <- list(tree_errors = d)
+    if (verbose > 0) {
+      message("Enabling save_tree_error")
     }
+    valids <- list(tree_errors = d)
   }
 
 
