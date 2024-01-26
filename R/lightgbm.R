@@ -113,6 +113,11 @@ add_boost_tree_lightgbm <- function() {
 #'   construction, set \code{free_raw_data = FALSE}. Useful for debugging.
 #' @param verbose Integer. < 0: Fatal, = 0: Error (Warning), = 1: Info,
 #'   > 1: Debug.
+#' @param save_tree_error Boolean. Whether or not to use the training set
+#'   to compute errors for each tree that will be stored on the record_evals
+#'   attribute. Note that this parameter is mutually exclusive with
+#'   \code{validation} and \code{early_stop} because otherwise it can override
+#'   the set used for cross validation.
 #' @param ... Engine arguments, hyperparameters, etc. that are passed on to
 #'   \code{\link[lightgbm]{lgb.train}}.
 #'
@@ -135,6 +140,7 @@ train_lightgbm <- function(x,
                            feature_pre_filter = FALSE,
                            free_raw_data = TRUE,
                            verbose = 0,
+                           save_tree_error = FALSE,
                            ...) {
   force(x)
   force(y)
@@ -238,6 +244,17 @@ train_lightgbm <- function(x,
     free_raw_data = free_raw_data
   )
 
+  if (save_tree_error) {
+    if (validation > 0) {
+      stop("`save_tree_error` cannot be `TRUE` when `validation > 0`")
+    }
+    if (verbose > 0) {
+      message("Enabling save_tree_error")
+    }
+    valids <- list(tree_errors = d)
+  }
+
+
 
   ##### Train #####
   main_args <- list(
@@ -247,8 +264,10 @@ train_lightgbm <- function(x,
     verbose = verbose
   )
 
-  if (!is.null(early_stop) && validation > 0) {
+  if (exists("valids")) {
     main_args$valids <- quote(valids)
+  }
+  if (!is.null(early_stop) && validation > 0) {
     main_args$early_stopping_rounds <- early_stop
   }
 

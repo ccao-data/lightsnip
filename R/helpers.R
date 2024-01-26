@@ -61,12 +61,17 @@ axe_recipe <- function(x) {
 lgbm_save <- function(model, zipfile) {
   file_lgbm <- file.path(tempdir(), "lgbm.model")
   lightgbm::lgb.save(model$fit, file_lgbm)
-  model$fit <- NULL
 
+  # The record_evals attribute of the model object, when present, gets stripped
+  # out by lgb.save(), so save it to a separate file
+  file_record_evals <- file.path(tempdir(), "record_evals.model")
+  saveRDS(model$fit$record_evals, file_record_evals)
+
+  model$fit <- NULL
   file_meta <- file.path(tempdir(), "meta.model")
   saveRDS(model, file_meta)
 
-  zip::zipr(zipfile, files = c(file_meta, file_lgbm))
+  zip::zipr(zipfile, files = c(file_meta, file_lgbm, file_record_evals))
 }
 
 
@@ -87,6 +92,7 @@ lgbm_load <- function(zipfile) {
 
   model <- readRDS(file.path(ex_dir, "meta.model"))
   model$fit <- lightgbm::lgb.load(file.path(ex_dir, "lgbm.model"))
+  model$fit$record_evals <- readRDS(file.path(ex_dir, "record_evals.model"))
 
   return(model)
 }

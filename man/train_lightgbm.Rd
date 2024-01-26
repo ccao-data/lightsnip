@@ -21,6 +21,7 @@ train_lightgbm(
   feature_pre_filter = FALSE,
   free_raw_data = TRUE,
   verbose = 0,
+  save_tree_error = FALSE,
   ...
 )
 }
@@ -77,6 +78,12 @@ construction, set \code{free_raw_data = FALSE}. Useful for debugging.}
 
 \item{verbose}{Integer. < 0: Fatal, = 0: Error (Warning), = 1: Info,
 > 1: Debug.}
+
+\item{save_tree_error}{Boolean. Whether or not to use the training set
+to compute errors for each tree that will be stored on the record_evals
+attribute. Note that this parameter is mutually exclusive with \code{validation}
+and \code{early_stop} because otherwise it can override the set used for cross
+validation.}
 
 \item{...}{Engine arguments, hyperparameters, etc. that are passed on to
 \code{\link[lightgbm]{lgb.train}}.}

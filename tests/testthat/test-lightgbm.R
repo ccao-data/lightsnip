@@ -82,6 +82,36 @@ test_that("lightgbm alternate objective", {
   expect_equal(info$objective, "huber")
 })
 
+test_that("lightgbm with save_tree_error saves record_evals", {
+  model_fit <- parsnip::boost_tree(trees = 50) %>%
+    parsnip::set_engine(
+      engine = "lightgbm",
+      objective = "regression", metric = "rmse", verbose = -1,
+      max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1,
+      save_tree_error = TRUE
+    ) %>%
+    parsnip::set_mode("regression") %>%
+    parsnip::fit(mpg ~ ., data = mtcars)
+
+  expect_equal(
+    length(model_fit$fit$record_evals$tree_errors$rmse$eval),
+    50
+  )
+})
+
+test_that("lightgbm with save_tree_error and validation throws error", {
+  expect_error(
+    reg_fit <-
+      parsnip::boost_tree(trees = 50, stop_iter = 2, mode = "regression") %>%
+      parsnip::set_engine(
+        "lightgbm",
+        save_tree_error = TRUE, validation = 0.25
+      ) %>%
+      parsnip::fit(mpg ~ ., data = mtcars),
+    regex = "`save_tree_error` cannot be `TRUE`"
+  )
+})
+
 test_that("lighgbm throws error", {
   expect_error(
     reg_fit <-
