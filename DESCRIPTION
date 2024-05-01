@@ -29,6 +29,7 @@ Suggests:
     data.table,
     DiagrammeR,
     DiagrammeRsvg,
+    glue,
     hardhat,
     jsonlite,
     kableExtra,
