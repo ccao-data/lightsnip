@@ -125,4 +125,23 @@ test_that("model can be saved and loaded", {
 
   expect_type(out, "double")
   expect_length(out, 51)
+
+  # Remove record_evals from the saved model zipfile to make sure the model can
+  # still be loaded if record_evals is missing
+  ex_dir <- glue::glue("{tempdir()}/no_record_evals")
+  zip::unzip(file, exdir = ex_dir)
+  file.remove(
+    c(
+      glue::glue("{ex_dir}/record_evals.model"),
+      # We have to remove record_evals.model from the tempdir as well, or else
+      # it will still exist when lgbm_load uses the tempdir to extract
+      # the new zipfile
+      glue::glue("{tempdir()}/record_evals.model"))
+  )
+  new_file <- tempfile(fileext = ".zip")
+  zip::zipr(new_file, files = list.files(ex_dir, full.names = TRUE))
+
+  # Load the model without record_evals and make sure it worked
+  reloaded_wo_record_evals <- lgbm_load(new_file)
+  expect_equal(length(reloaded_wo_record_evals$fit$record_evals), 0)
 })
