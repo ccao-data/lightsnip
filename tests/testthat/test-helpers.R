@@ -136,7 +136,8 @@ test_that("model can be saved and loaded", {
       # We have to remove record_evals.model from the tempdir as well, or else
       # it will still exist when lgbm_load uses the tempdir to extract
       # the new zipfile
-      glue::glue("{tempdir()}/record_evals.model"))
+      glue::glue("{tempdir()}/record_evals.model")
+    )
   )
   new_file <- tempfile(fileext = ".zip")
   zip::zipr(new_file, files = list.files(ex_dir, full.names = TRUE))
