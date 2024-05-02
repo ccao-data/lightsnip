@@ -92,7 +92,12 @@ lgbm_load <- function(zipfile) {
 
   model <- readRDS(file.path(ex_dir, "meta.model"))
   model$fit <- lightgbm::lgb.load(file.path(ex_dir, "lgbm.model"))
-  model$fit$record_evals <- readRDS(file.path(ex_dir, "record_evals.model"))
+
+  # For backwards-compatibility, only load record_evals if they exist
+  record_evals_path <- file.path(ex_dir, "record_evals.model")
+  if (file.exists(record_evals_path)) {
+    model$fit$record_evals <- readRDS(record_evals_path)
+  }
 
   return(model)
 }
