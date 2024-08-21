@@ -7,7 +7,6 @@
 [![test-coverage](https://github.com/ccao-data/lightsnip/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/ccao-data/lightsnip/actions/workflows/test-coverage.yaml)
 [![lint](https://github.com/ccao-data/lightsnip/actions/workflows/lint.yaml/badge.svg)](https://github.com/ccao-data/lightsnip/actions/workflows/lint.yaml)
 [![pre-commit](https://github.com/ccao-data/lightsnip/actions/workflows/pre-commit.yaml/badge.svg)](https://github.com/ccao-data/lightsnip/actions/workflows/pre-commit.yaml)
-[![codecov](https://codecov.io/gh/ccao-data/lightsnip/branch/master/graph/badge.svg)](https://codecov.io/gh/ccao-data/lightsnip)
 
 Lightsnip is a hard fork of
 [curso-r/treesnip](https://github.com/curso-r/treesnip). It adds
