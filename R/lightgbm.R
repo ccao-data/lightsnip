@@ -93,6 +93,8 @@ add_boost_tree_lightgbm <- function() {
 #'   integer vector with the indices of the features.
 #' @param weight A numeric vector of sample weights. Should be the same length
 #'   as the number of rows of \code{x}.
+#' @param weight_col A character string represeting a column of \code{x} to
+#'   use as sample weights. Cannot be set at the same time as \code{weight}.
 #' @param validation A positive number on \code{[0, 1)}. \code{validation} is
 #'   the proportion of data in \code{x} and \code{y} that is used for
 #'   performance assessment and early stopping.
@@ -133,6 +135,7 @@ train_lightgbm <- function(x,
                            add_to_linked_depth = 2L,
                            categorical_feature = NULL,
                            weight = NULL,
+                           weight_col = NULL,
                            validation = 0,
                            sample_type = "random",
                            early_stop = NULL,
@@ -194,6 +197,15 @@ train_lightgbm <- function(x,
   }
   if (is.null(num_leaves) && max_depth > 0) {
     num_leaves <- max(2^max_depth - 1, 2)
+  }
+  if (!is.null(weight) && !is.null(weight_col)) {
+    rlang::abort("Cannot set both `weight` and `weight_col`.")
+  } else if (!is.null(weight_col)) {
+    weight <- x[[weight_col]]
+    x <- x[, !(names(x) %in% weight_col)]
+    message("Using `weight_col` with std. dev. of :", sd(weight))
+  } else {
+    weight <- rep(1, nrow(x))
   }
 
   arg_list <- list(
