@@ -597,7 +597,7 @@ Given that individual properties are unlikely to share _all_ of their leaf nodes
 
 ## Quantifying Comparables
 
-Now that we've seen how LightGBM trees are structured, we can use them to create a _similarity score_. This score is simply the percentage of shared leaf nodes between a target and comparable property, weighted by the importance of each tree.
+Now that we've seen how LightGBM trees are structured, we can use them to create a _similarity score_. This score is simply the percentage of shared leaf nodes between a target and comparable property.
 
 Let's see it in action. Here is the same green table from above, but with predicted values replaced by a boolean (<span style="background-color:lightgreen"><strong>T</strong></span>) when the property shares the same leaf node as the target within each tree. The rightmost columns show the number and percentage of leaf nodes shared with the target.
 
@@ -626,7 +626,7 @@ ames_comps_ids <- bind_cols(
   set_names(c("ID", paste0("Tree ", 0:9))) %>%
   mutate(across(everything(), as.character)) %>%
   mutate(
-    `Number` = c(6, 2, 2, 2, 1, 2, 2, 6, 5, 6),
+    `Number` = c(6, 2, 2, 2, 1, 2, 2, 6, 5, 5),
     `Percent` = scales::percent(`Number` / 10, accuracy = 1),
     `Number` = paste0(`Number`, " / 10")
   )
@@ -649,70 +649,11 @@ ames_comps_ids %>%
   column_spec(12:13, background = "#d9d9d9")
 ```
 
-The observations with a high percentage of shared leaf nodes _should_ be most comparable to the target property. However, this assumes that all trees in the model are weighted equally, which is rarely the case. In LightGBM, trees typically have diminishing importance, i.e. each successive tree has less impact on the overall error of the model. To find accurate comparables, we need to quantify each tree's importance and use it to weight each leaf node match.
+The observations with a high percentage of shared leaf nodes—that is, the observations with the highest similarity scores—should be most comparable to the target property.
 
-Here is a simple function to determine tree importance based on how much each tree contributes to the overall decrease in model error. We can apply it to our training data to get weights for each tree.
+### Final Results
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-get_weights <- function(metric, model, train, outcome_col, num_trees) {
-  model$params$metric <- list(metric)
-  train_lgb <- lgb.Dataset(as.matrix(train), label = train[[outcome_col]])
-
-  trained_model <- lgb.train(
-    params = model$params,
-    data = train_lgb,
-    valids = list(test = train_lgb),
-    nrounds = num_trees
-  )
-
-  # Get the initial error for base model before first tree
-  # this NEEDS to be after the model is trained
-  # (or else it won't train correctly)
-  set_field(train_lgb, "init_score", as.matrix(train[[outcome_col]]))
-  initial_predictions <- get_field(train_lgb, "init_score")
-  init_score <- mean(initial_predictions)
-
-  # Index into the errors list, and un-list so it is a flat/1dim list
-  errors <- unlist(trained_model$record_evals$test[[metric]]$eval)
-  errors <- c(init_score, errors)
-  diff_in_errors <- diff(errors, 1, 1)
-
-  # Take proportion of diff in errors over total diff in
-  # errors from all trees
-  weights <- diff_in_errors / sum(diff_in_errors)
-
-  return(weights)
-}
-
-# Prepare data using a tidymodels recipe
-ames_train_prep <- bake(prep(ames_recp), ames_train)
-
-# Get the decrease in error caused by each successive tree
-ames_tree_weights <- get_weights(
-  metric = "rmse",
-  model = ames_fit_eng_10,
-  train = ames_train_prep,
-  outcome_col = "sale_price",
-  num_trees = 10
-)
-```
-
-```{r}
-ames_tree_weights %>%
-  t() %>%
-  as_tibble() %>%
-  bind_cols(tibble(Tree = "Weight"), .) %>%
-  set_names(c("-", paste0("Tree ", 0:9))) %>%
-  mutate(across(
-    starts_with("Tree "),
-    ~ scales::percent(.x, accuracy = 0.1)
-  )) %>%
-  kbl("html", align = "c", escape = FALSE) %>%
-  kable_classic(html_font = "sans-serif") %>%
-  row_spec(1, align = "right")
-```
-
-These weights are then multiplied row-wise by the boolean matching matrix from above. This means that for each tree and comparable sale, the weight value is either kept (when matching / `TRUE`) or zeroed out (when not matching / `FALSE`). The final similarity score for our target property (ID = 2) is the _sum of each comparable row_.
+Now we can simply sort by similarity score to get the observations most similar to our target property (ID = 2).
 
 ```{r, message=FALSE}
 ames_final_matrix <- matrix(FALSE, nrow = 10, ncol = 10)
@@ -721,37 +662,22 @@ for (i in seq_len(nrow(shared_nodes))) {
   ames_final_matrix[shared_nodes$x[[i]], shared_nodes$y[[i]] - 1] <- TRUE
 }
 
-ames_final_matrix_fmt <- (t(ames_final_matrix) * ames_tree_weights) %>%
-  t() %>%
+ames_final_matrix_fmt <- ames_final_matrix %>%
   bind_cols(
     tibble(ID = leaf_4_ids),
     .
   ) %>%
   set_names(c("ID", paste0("Tree ", 0:9))) %>%
+  # Calculate similarity scores
   mutate(
-    `Sim. Score` = rowSums(across(starts_with("Tree "))),
-    across(starts_with("Tree "), ~ scales::percent(.x, accuracy = 0.1)),
-    `Sim. Score` = scales::percent(`Sim. Score`, accuracy = 0.01)
-  )
-
-for (i in seq_len(nrow(shared_nodes))) {
-  ames_final_matrix_fmt[shared_nodes$x[[i]], shared_nodes$y[[i]]] <- paste0(
-    "<span style='background-color:lightgreen'>",
-    ames_final_matrix_fmt[shared_nodes$x[[i]], shared_nodes$y[[i]]],
-    "</span>"
-  )
-}
-
-ames_final_matrix_fmt %>%
-  kbl("html", align = "c", escape = FALSE) %>%
-  kable_classic(html_font = "sans-serif") %>%
-  row_spec(1:10, align = "right") %>%
-  column_spec(12, background = "#d9d9d9")
+    across(starts_with("Tree "), as.integer, .names = "score_{.col}"),
+    across(starts_with("score_"), ~ .x / 10),
+    `Sim. Score` = rowSums(across(starts_with("score_"))),
+    `Sim. Score` = scales::percent(`Sim. Score`, accuracy = 1)
+  ) %>%
+  # Drop internal representation of tree matches now that we have scores
+  select(-starts_with("score_"))
 ```
-
-### Final Results
-
-Now we can simply sort by similarity score to get the observations most similar to our target property (ID = 2).
 
 ```{r}
 ames_example_props %>%
