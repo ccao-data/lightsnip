@@ -668,15 +668,10 @@ ames_final_matrix_fmt <- ames_final_matrix %>%
     .
   ) %>%
   set_names(c("ID", paste0("Tree ", 0:9))) %>%
-  # Calculate similarity scores
   mutate(
-    across(starts_with("Tree "), as.integer, .names = "score_{.col}"),
-    across(starts_with("score_"), ~ .x / 10),
-    `Sim. Score` = rowSums(across(starts_with("score_"))),
-    `Sim. Score` = scales::percent(`Sim. Score`, accuracy = 1)
-  ) %>%
-  # Drop internal representation of tree matches now that we have scores
-  select(-starts_with("score_"))
+    `Sim. Score` = (rowSums(across(starts_with("Tree "), as.integer)) / 10) %>%
+      scales::percent(accuracy = 1)
+  )
 ```
 
 ```{r}
