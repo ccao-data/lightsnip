@@ -124,7 +124,7 @@ add_boost_tree_lightgbm <- function() {
 #' @return A fitted \code{lgb.Booster} object.
 #' @keywords internal
 #' @export
-train_lightgbm <- function(x, # nolint: cyclocomp_linter
+train_lightgbm <- function(x, # nolint
                            y,
                            num_iterations = 10,
                            max_depth = 17,
