@@ -7,8 +7,7 @@
 #' discouraging residuals that systematically scale with `y`.
 #'
 #' This is an R port of the `LGBCovPenalty` objective from
-#' an active collaboration.
-#' (https://github.com/nicacevedo/soft-vertical-equity-constrained-mass-appraissal)
+#' an active collabration. (https://github.com/nicacevedo/soft-vertical-equity-constrained-mass-appraissal) # nolint
 #' It is intended to be used when the model is trained in log-space (so the
 #' "diff" residual is equivalent to a log-ratio).
 #'
