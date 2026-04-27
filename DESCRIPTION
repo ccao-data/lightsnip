@@ -43,9 +43,10 @@ Suggests:
     rsample,
     scales,
     snakecase,
-    testthat (>= 2.1.0),
+    testthat (>= 3.0.0),
     tidyr,
     tune,
     workflows,
     yardstick
 RoxygenNote: 7.2.3
+Config/testthat/edition: 3
