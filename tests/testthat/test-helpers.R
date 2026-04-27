@@ -39,8 +39,6 @@ test_that("invalid data types stop process", {
 })
 
 
-context("test lgbm_save() and lgbm_load()")
-
 ##### TEST lgbm_save() and lgbm_load() #####
 
 library(modeldata)
