@@ -1,5 +1,3 @@
-context("test axe_tune_data()")
-
 ##### TEST axe_tune_data() #####
 
 axe_test_data <- dplyr::tibble(
@@ -19,8 +17,6 @@ test_that("invalid data types stop process", {
   expect_condition(axe_tune_data(8))
 })
 
-
-context("test axe_recipe()")
 
 ##### TEST axe_recipe() #####
 
