@@ -8,8 +8,8 @@ axe_test_data <- dplyr::tibble(
 
 # Test for expected outputs
 test_that("output is as expected", {
-  expect_equivalent(axe_tune_data(axe_test_data), axe_test_data[, 1:2])
-})
+  expect_equal(axe_tune_data(axe_test_data), axe_test_data[, 1:2], ignore_attr = TRUE)
+})})
 
 # Test that invalid inputs throw errors
 test_that("invalid data types stop process", {
