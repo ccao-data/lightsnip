@@ -1,5 +1,3 @@
-context("test early stopping")
-
 test_that("validation uses correct dimensions", {
   expect_error(
     reg_fit <-

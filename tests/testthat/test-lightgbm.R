@@ -1,5 +1,3 @@
-context("test lightgbm regression")
-
 test_that("lightgbm regression", {
   model <- parsnip::boost_tree(trees = 50) %>%
     parsnip::set_engine(
@@ -122,8 +120,6 @@ test_that("lighgbm throws error", {
   )
 })
 
-
-context("test tune")
 
 test_that("lightgbm with tune", {
   model <- parsnip::boost_tree(

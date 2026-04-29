@@ -1,5 +1,3 @@
-context("test axe_tune_data()")
-
 ##### TEST axe_tune_data() #####
 
 axe_test_data <- dplyr::tibble(
@@ -10,7 +8,11 @@ axe_test_data <- dplyr::tibble(
 
 # Test for expected outputs
 test_that("output is as expected", {
-  expect_equivalent(axe_tune_data(axe_test_data), axe_test_data[, 1:2])
+  expect_equal(
+    axe_tune_data(axe_test_data),
+    axe_test_data[, 1:2],
+    ignore_attr = TRUE
+  )
 })
 
 # Test that invalid inputs throw errors
@@ -19,8 +21,6 @@ test_that("invalid data types stop process", {
   expect_condition(axe_tune_data(8))
 })
 
-
-context("test axe_recipe()")
 
 ##### TEST axe_recipe() #####
 
@@ -42,8 +42,6 @@ test_that("invalid data types stop process", {
   expect_condition(axe_recipe(8))
 })
 
-
-context("test lgbm_save() and lgbm_load()")
 
 ##### TEST lgbm_save() and lgbm_load() #####
 
