@@ -156,10 +156,8 @@ train_lightgbm <- function(x, # nolint
   mse_cov_rho_val <- NULL
   if (!is.null(others$objective) && identical(others$objective, "mse_cov")) {
     mse_cov_rho_val <- if (is.null(mse_cov_rho)) 1e-3 else as.numeric(mse_cov_rho)
-    # The callback itself is built *after* the train/validation split below,
-    # so `y_mean` is computed from training rows only (no leakage from the
-    # inner early-stopping holdout). `objective`/`num_class` are cleared
-    # here so lgb.train doesn't reject the unknown name.
+    # Clear `objective`/`num_class` so lgb.train doesn't reject the unknown
+    # name when we hand it the callback via `obj`.
     others$objective <- NULL
     others$num_class <- NULL
   }
@@ -255,6 +253,10 @@ train_lightgbm <- function(x, # nolint
     trn_index <- 1:n
   }
 
+  # Build the mse_cov callback against training rows only — `y[val_index]`
+  # is held out for lgb.train's early stopping, so including those labels
+  # in `y_mean` would leak the holdout's label mean into the centering
+  # term used by the covariance penalty on every boosting iteration.
   if (!is.null(mse_cov_rho_val)) {
     custom_obj <- make_obj_mse_cov(
       rho    = mse_cov_rho_val,
