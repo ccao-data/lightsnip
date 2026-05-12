@@ -153,6 +153,9 @@ train_lightgbm <- function(x, # nolint
   others$mse_cov_rho <- NULL
 
   custom_obj      <- NULL
+  # Sentinel that gates two downstream branches:
+  #   - whether to fall back to the default "regression" objective
+  #   - whether to construct the mse_cov objective callback
   mse_cov_rho_val <- NULL
   if (!is.null(others$objective) && identical(others$objective, "mse_cov")) {
     mse_cov_rho_val <- if (is.null(mse_cov_rho)) 1e-3 else as.numeric(mse_cov_rho)
