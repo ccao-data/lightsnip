@@ -152,12 +152,14 @@ train_lightgbm <- function(x, # nolint
   mse_cov_rho <- others$mse_cov_rho
   others$mse_cov_rho <- NULL
 
-  custom_obj <- NULL
+  custom_obj      <- NULL
+  mse_cov_rho_val <- NULL
   if (!is.null(others$objective) && identical(others$objective, "mse_cov")) {
-    rho_val <- if (is.null(mse_cov_rho)) 1e-3 else as.numeric(mse_cov_rho)
-    custom_obj <- make_obj_mse_cov(rho = rho_val, y_mean = mean(y))
-    # When `obj` is a custom callback we must NOT also set `objective` in
-    # params, otherwise lgb.train will reject the unknown name.
+    mse_cov_rho_val <- if (is.null(mse_cov_rho)) 1e-3 else as.numeric(mse_cov_rho)
+    # The callback itself is built *after* the train/validation split below,
+    # so `y_mean` is computed from training rows only (no leakage from the
+    # inner early-stopping holdout). `objective`/`num_class` are cleared
+    # here so lgb.train doesn't reject the unknown name.
     others$objective <- NULL
     others$num_class <- NULL
   }
@@ -165,7 +167,7 @@ train_lightgbm <- function(x, # nolint
   # Set training objective default (always regression) when not specified.
   # Skipped when a custom `obj` callback is in use, since lgb.train will then
   # supply the gradient/hessian itself and `objective` must be unset.
-  if (is.null(custom_obj) && !any(names(others) %in% c("objective"))) {
+  if (is.null(mse_cov_rho_val) && !any(names(others) %in% c("objective"))) {
     others$num_class <- 1
     others$objective <- "regression"
   }
@@ -251,6 +253,13 @@ train_lightgbm <- function(x, # nolint
     ))
   } else {
     trn_index <- 1:n
+  }
+
+  if (!is.null(mse_cov_rho_val)) {
+    custom_obj <- make_obj_mse_cov(
+      rho    = mse_cov_rho_val,
+      y_mean = mean(y[trn_index])
+    )
   }
 
   d <- lightgbm::lgb.Dataset(
