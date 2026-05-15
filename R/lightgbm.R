@@ -160,7 +160,8 @@ train_lightgbm <- function(x, # nolint
   mse_cov_rho_val <- NULL
 
   if (!is.null(others$objective) && identical(others$objective, "mse_cov")) {
-    mse_cov_rho_val <- if (is.null(mse_cov_rho)) 1e-3 else as.numeric(mse_cov_rho)
+    mse_cov_rho_val <-
+      if (is.null(mse_cov_rho)) 1e-3 else as.numeric(mse_cov_rho)
     # Clear `objective`/`num_class` so lgb.train doesn't reject the unknown
     # name when we hand it the callback via `obj`.
     others$objective <- NULL
