@@ -66,12 +66,6 @@ make_obj_mse_cov <- function(rho, y_mean, zero_grad_tol = 1e-6) {
     grad <- grad_base + grad_pen
     hess <- hess_base + hess_pen
 
-    # Floor tiny values, mirroring the reference implementation
-    small_g <- abs(grad) < zero_grad_tol
-    if (any(small_g)) grad[small_g] <- zero_grad_tol
-    small_h <- hess < zero_grad_tol
-    if (any(small_h)) hess[small_h] <- zero_grad_tol
-
     list(grad = grad, hess = hess)
   }
 }
