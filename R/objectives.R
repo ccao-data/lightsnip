@@ -22,18 +22,14 @@
 #' @param y_mean Numeric. Mean of the training labels. Should be computed once
 #'   from the training set and captured here so the centering is stable across
 #'   iterations.
-#' @param zero_grad_tol Numeric. Floor applied to absolute gradients/Hessians
-#'   to avoid zero entries that confuse LightGBM. Matches the reference
-#'   implementation.
 #'
 #' @return A function with signature `function(preds, dtrain)` suitable for
 #'   passing as the `obj` argument of [lightgbm::lgb.train].
 #'
 #' @export
-make_obj_mse_cov <- function(rho, y_mean, zero_grad_tol = 1e-6) {
+make_obj_mse_cov <- function(rho, y_mean) {
   rho <- as.numeric(rho)
   y_mean <- as.numeric(y_mean)
-  zero_grad_tol <- as.numeric(zero_grad_tol)
   if (length(rho) != 1L || is.na(rho) || rho < 0) {
     rlang::abort("`rho` must be a single non-negative numeric value.")
   }

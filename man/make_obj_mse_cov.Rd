@@ -4,7 +4,7 @@
 \alias{make_obj_mse_cov}
 \title{Custom LightGBM objective: MSE + rho * Cov(r, y)^2}
 \usage{
-make_obj_mse_cov(rho, y_mean, zero_grad_tol = 1e-06)
+make_obj_mse_cov(rho, y_mean)
 }
 \arguments{
 \item{rho}{Numeric. Non-negative penalty weight. \code{rho = 0} recovers plain
@@ -13,10 +13,6 @@ MSE.}
 \item{y_mean}{Numeric. Mean of the training labels. Should be computed once
 from the training set and captured here so the centering is stable across
 iterations.}
-
-\item{zero_grad_tol}{Numeric. Floor applied to absolute gradients/Hessians
-to avoid zero entries that confuse LightGBM. Matches the reference
-implementation.}
 }
 \value{
 A function with signature \code{function(preds, dtrain)} suitable for
