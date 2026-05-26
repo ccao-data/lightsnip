@@ -1,5 +1,3 @@
-context("test hyperparameters")
-
 model <- parsnip::boost_tree() %>%
   parsnip::set_mode("regression")
 

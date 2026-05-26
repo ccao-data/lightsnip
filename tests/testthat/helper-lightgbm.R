@@ -102,7 +102,7 @@ expect_can_tune_boost_tree <- function(model) {
   expect_true(all(!is.nan(tune::collect_metrics(adj)$mean)))
 
   final <- model %>%
-    tune::finalize_model(tune::select_best(adj)) %>%
+    tune::finalize_model(tune::select_best(adj, metric = "rmse")) %>%
     parsnip::set_mode("regression") %>%
     parsnip::fit(mpg ~ ., mtcars)
 
