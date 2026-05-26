@@ -326,14 +326,9 @@ train_lightgbm <- function(x, # nolint
 #'
 #' @export
 pred_lgb_reg_num <- function(object, new_data, ...) {
-  # Use type = "raw" so the result is the unmodified booster score. For
-  # regression this is identical to type = "response" but, unlike "response",
-  # it does not warn when the booster was trained with a custom objective
-  # (e.g. lightsnip's `mse_cov`).
   stats::predict(
     object$fit,
     as.matrix(new_data),
-    type = "raw",
     params = list(predict_disable_shape_check = TRUE),
     ...
   )
