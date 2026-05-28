@@ -5,6 +5,7 @@ llm-docs: true
 template:
   bootstrap: 5
 
+
 authors:
   sidebar:
     roles: [aut, ctb]
