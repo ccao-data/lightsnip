@@ -36,7 +36,7 @@ Suggests:
     knitr,
     lintr,
     modeldata,
-    pkgdown,
+    pkgdown (>= 2.2.0),
     readr,
     recipes,
     rmarkdown,
