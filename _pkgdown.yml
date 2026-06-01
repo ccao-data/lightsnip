@@ -27,7 +27,7 @@ reference:
     Factory functions that return custom LightGBM objective callbacks for
     use as the `obj` argument of `lgb.train`.
 - contents:
-  - make_obj_mse_cov
+  - make_objective_mse_cov
 - subtitle: LightGBM hyperparameters
   desc:: >
     LightGBM dials:: paramter functions that can be used with tune_ functions.

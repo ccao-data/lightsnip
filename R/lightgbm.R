@@ -152,7 +152,7 @@ train_lightgbm <- function(x, # nolint
   mse_cov_rho <- others$mse_cov_rho
   others$mse_cov_rho <- NULL
 
-  custom_obj <- NULL
+  custom_objective <- NULL
 
   # Sentinel that gates two downstream branches:
   #   - whether to fall back to the default "regression" objective
@@ -264,7 +264,7 @@ train_lightgbm <- function(x, # nolint
   # in `y_mean` would leak the holdout's label mean into the centering
   # term used by the covariance penalty on every boosting iteration.
   if (!is.null(mse_cov_rho_val)) {
-    custom_obj <- make_obj_mse_cov(
+    custom_objective <- make_objective_mse_cov(
       rho    = mse_cov_rho_val,
       y_mean = mean(y[trn_index])
     )
@@ -305,8 +305,8 @@ train_lightgbm <- function(x, # nolint
     main_args$early_stopping_rounds <- early_stop
   }
   # Wire in the custom objective callback (if any) under lgb.train's `obj` arg
-  if (!is.null(custom_obj)) {
-    main_args$obj <- quote(custom_obj)
+  if (!is.null(custom_objective)) {
+    main_args$obj <- quote(custom_objective)
   }
 
   call <- parsnip::make_call(fun = "lgb.train", ns = "lightgbm", main_args)

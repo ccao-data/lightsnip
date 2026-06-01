@@ -27,7 +27,7 @@
 #'   passing as the `obj` argument of [lightgbm::lgb.train].
 #'
 #' @export
-make_obj_mse_cov <- function(rho, y_mean) {
+make_objective_mse_cov <- function(rho, y_mean) {
   rho <- as.numeric(rho)
   y_mean <- as.numeric(y_mean)
   if (length(rho) != 1L || is.na(rho) || rho < 0) {
