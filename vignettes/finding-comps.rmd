@@ -137,7 +137,7 @@ lgb.plot.tree <- function(model = NULL, tree = NULL, rules = NULL) {
       value = c("DimGray", "1.5", "vee", "Helvetica")
     )
 
-  return(graph)
+  graph
 }
 ```
 
