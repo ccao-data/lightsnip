@@ -14,6 +14,7 @@ train_lightgbm(
   add_to_linked_depth = 2L,
   categorical_feature = NULL,
   weight = NULL,
+  log_target = FALSE,
   validation = 0,
   sample_type = "random",
   early_stop = NULL,
@@ -51,6 +52,14 @@ integer vector with the indices of the features.}
 
 \item{weight}{A numeric vector of sample weights. Should be the same length
 as the number of rows of \code{x}.}
+
+\item{log_target}{Logical, default FALSE. When TRUE, the outcome \code{y}
+is log-transformed before training, so the model fits and early-stops in
+log space. Predictions made through \code{\link{pred_lgb_reg_num}} (i.e.
+\code{predict()} on the parsnip fit) are automatically \code{exp()}'d
+back to the original scale, including after a
+\code{\link{lgbm_save}}/\code{\link{lgbm_load}} round trip. Analogous to
+LightGBM's built-in \code{reg_sqrt} objective, but for log.}
 
 \item{validation}{A positive number on \code{[0, 1)}. \code{validation} is
 the proportion of data in \code{x} and \code{y} that is used for

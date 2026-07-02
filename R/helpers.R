@@ -67,7 +67,15 @@ lgbm_save <- function(model, zipfile) {
   file_record_evals <- file.path(tempdir(), "record_evals.model")
   saveRDS(model$fit$record_evals, file_record_evals)
 
+  # lgb.save() also strips R attributes on the booster, so carry the
+  # log_target tag (see train_lightgbm) in the parsnip metadata instead.
+  # lgbm_load() re-attaches it to the booster
+  log_target <- isTRUE(attr(model$fit, "log_target"))
+
   model$fit <- NULL
+  if (log_target) {
+    model$log_target <- TRUE
+  }
   file_meta <- file.path(tempdir(), "meta.model")
   saveRDS(model, file_meta)
 
@@ -92,6 +100,12 @@ lgbm_load <- function(zipfile) {
 
   model <- readRDS(file.path(ex_dir, "meta.model"))
   model$fit <- lightgbm::lgb.load(file.path(ex_dir, "lgbm.model"))
+
+  # Re-attach the log_target tag (stripped by lgb.save) to the booster so
+  # pred_lgb_reg_num() back-transforms predictions. See lgbm_save()
+  if (isTRUE(model$log_target)) {
+    attr(model$fit, "log_target") <- TRUE
+  }
 
   # For backwards-compatibility, only load record_evals if they exist
   record_evals_path <- file.path(ex_dir, "record_evals.model")

@@ -93,6 +93,13 @@ add_boost_tree_lightgbm <- function() {
 #'   integer vector with the indices of the features.
 #' @param weight A numeric vector of sample weights. Should be the same length
 #'   as the number of rows of \code{x}.
+#' @param log_target Logical, default FALSE. When TRUE, the outcome \code{y}
+#'   is log-transformed before training, so the model fits and early-stops in
+#'   log space. Predictions made through \code{\link{pred_lgb_reg_num}} (i.e.
+#'   \code{predict()} on the parsnip fit) are automatically \code{exp()}'d
+#'   back to the original scale, including after a
+#'   \code{\link{lgbm_save}}/\code{\link{lgbm_load}} round trip. Analogous to
+#'   LightGBM's built-in \code{reg_sqrt} objective, but for log.
 #' @param validation A positive number on \code{[0, 1)}. \code{validation} is
 #'   the proportion of data in \code{x} and \code{y} that is used for
 #'   performance assessment and early stopping.
@@ -133,6 +140,7 @@ train_lightgbm <- function(x, # nolint
                            add_to_linked_depth = 2L,
                            categorical_feature = NULL,
                            weight = NULL,
+                           log_target = FALSE,
                            validation = 0,
                            sample_type = "random",
                            early_stop = NULL,
@@ -144,6 +152,15 @@ train_lightgbm <- function(x, # nolint
                            ...) {
   force(x)
   force(y)
+
+  # Log the outcome up front so everything downstream (the train/validation
+  # split, the mse_cov y_mean, and the lgb.Dataset labels) sees log space.
+  # Predictions are exp()'d back by pred_lgb_reg_num()
+  log_target <- isTRUE(log_target)
+  if (log_target) {
+    y <- log(y)
+  }
+
   others <- list(...)
 
   # Custom objective handling. `mse_cov_rho` is a lightsnip-specific engine
@@ -310,7 +327,17 @@ train_lightgbm <- function(x, # nolint
   }
 
   call <- parsnip::make_call(fun = "lgb.train", ns = "lightgbm", main_args)
-  rlang::eval_tidy(call, env = rlang::current_env())
+  fit <- rlang::eval_tidy(call, env = rlang::current_env())
+
+  # Tag the booster so pred_lgb_reg_num() knows to back-transform predictions.
+  # The tag lives on the booster (not the engine args) because engine arg
+  # quosures may not be evaluable outside the training session. lgb.save()
+  # strips attributes, so lgbm_save()/lgbm_load() carry it explicitly
+  if (log_target) {
+    attr(fit, "log_target") <- TRUE
+  }
+
+  fit
 }
 
 
@@ -326,12 +353,20 @@ train_lightgbm <- function(x, # nolint
 #'
 #' @export
 pred_lgb_reg_num <- function(object, new_data, ...) {
-  stats::predict(
+  pred <- stats::predict(
     object$fit,
     as.matrix(new_data),
     params = list(predict_disable_shape_check = TRUE),
     ...
   )
+
+  # Models fit with `log_target = TRUE` train on log(y), so their raw
+  # predictions are in log space and must be exp()'d back to original units
+  if (isTRUE(attr(object$fit, "log_target"))) {
+    pred <- exp(pred)
+  }
+
+  pred
 }
 
 # nolint start
