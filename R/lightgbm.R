@@ -171,7 +171,7 @@ train_lightgbm <- function(x, # nolint
   # Set training objective default (always regression) when not specified.
   # Skipped when a custom `obj` callback is in use, since lgb.train will then
   # supply the gradient/hessian itself and `objective` must be unset.
-  if (is.null(mse_cov_rho_val) && !any(names(others) %in% c("objective"))) {
+  if (is.null(mse_cov_rho_val) && !any(names(others) == "objective")) {
     others$num_class <- 1
     others$objective <- "regression"
   }
