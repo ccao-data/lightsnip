@@ -30,8 +30,8 @@ an active collabration. (https://github.com/nicacevedo/soft-vertical-equity-cons
 It is intended to be used when the model is trained in log-space (so the
 "diff" residual is equivalent to a log-ratio).
 
-Penalty (using mean-centered labels yc = y_true - mean(y_true)):
-\deqn{cov = (1/n) * sum_i r_i * yc_i}
+Penalty (using mean-centered labels y_centered = y_true - mean(y_true)):
+\deqn{cov = (1/n) * sum_i r_i * y_centered_i}
 \deqn{penalty = 0.5 * rho * n * cov^2}
 Diagonal Hessian approximation is used (matches the reference Python
 implementation).

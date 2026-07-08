@@ -11,8 +11,8 @@
 #' It is intended to be used when the model is trained in log-space (so the
 #' "diff" residual is equivalent to a log-ratio).
 #'
-#' Penalty (using mean-centered labels yc = y_true - mean(y_true)):
-#' \deqn{cov = (1/n) * sum_i r_i * yc_i}
+#' Penalty (using mean-centered labels y_centered = y_true - mean(y_true)):
+#' \deqn{cov = (1/n) * sum_i r_i * y_centered_i}
 #' \deqn{penalty = 0.5 * rho * n * cov^2}
 #' Diagonal Hessian approximation is used (matches the reference Python
 #' implementation).
@@ -41,21 +41,21 @@ make_objective_mse_cov <- function(rho, y_mean) {
 
     # Centered labels (training-set mean is captured at construction time so
     # the penalty geometry stays stable across boosting iterations)
-    yc <- y_true - y_mean
+    y_centered <- y_true - y_mean
 
     # Residual ("diff" mode); in log-space training this is the log-ratio
     r <- y_pred - y_true
 
-    # Covariance estimate (E[yc] is ~0 by construction)
-    cov_val <- mean(r * yc)
+    # Covariance estimate (E[y_centered] is ~0 by construction)
+    cov_val <- mean(r * y_centered)
 
     # Base squared-error grad/hess
     grad_base <- 2.0 * (y_pred - y_true)
     hess_base <- rep(2.0, n)
 
     # Penalty grad/hess (diagonal approximation)
-    # dc/dy_pred_i = (1/n) * yc_i  (since dr_i/dy_pred_i = 1)
-    a <- yc / n
+    # dc/dy_pred_i = (1/n) * y_centered_i  (since dr_i/dy_pred_i = 1)
+    a <- y_centered / n
     grad_pen <- rho * n * cov_val * a
     hess_pen <- rho * n * (a^2)
 
