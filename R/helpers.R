@@ -17,7 +17,7 @@ axe_tune_data <- function(x) {
   attributes(stripped)$rset_info$att$splits <- NULL
   attributes(stripped)$rset_info$att$id <- NULL
 
-  return(stripped)
+  stripped
 }
 
 
@@ -43,7 +43,7 @@ axe_recipe <- function(x) {
   axed <- utils::modifyList(axed, list(orig_lvls = NULL))
   class(axed) <- "recipe"
 
-  return(axed)
+  axed
 }
 
 
@@ -99,5 +99,5 @@ lgbm_load <- function(zipfile) {
     model$fit$record_evals <- readRDS(record_evals_path)
   }
 
-  return(model)
+  model
 }
