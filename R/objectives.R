@@ -33,6 +33,9 @@ make_objective_mse_cov <- function(rho, y_mean) {
   if (length(rho) != 1L || is.na(rho) || rho < 0) {
     rlang::abort("`rho` must be a single non-negative numeric value.")
   }
+  if (length(y_mean) != 1L || is.na(y_mean)) {
+    rlang::abort("`y_mean` must be a single non-missing numeric value.")
+  }
 
   function(preds, dtrain) {
     y_true <- lightgbm::get_field(dtrain, "label")
