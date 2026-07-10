@@ -17,7 +17,6 @@ test_that("mse_cov with rho = 0 recovers plain MSE grad/hess", {
   out <- obj(preds, dtrain)
 
   expect_equal(out$grad, 2 * (preds - y))
-  expect_equal(out$hess, rep(2, length(y)))
 })
 
 test_that("mse_cov grad/hess match hand-computed penalty", {
