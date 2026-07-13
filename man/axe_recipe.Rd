@@ -11,7 +11,7 @@ axe_recipe(x)
 }
 \value{
 Recipe object from \code{x} but with environment and factor level
-  data removed.
+data removed.
 }
 \description{
 Recipe objects used by Tidymodels sometimes become bloated due

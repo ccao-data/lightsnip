@@ -57,7 +57,7 @@ the proportion of data in \code{x} and \code{y} that is used for
 performance assessment and early stopping.}
 
 \item{sample_type}{The sampling method for the validation set. Can be either
-"random" (a completely random sample) or "recent" (the last X% of rows,
+"random" (a completely random sample) or "recent" (the last X\% of rows,
 where X is the proportion specified by \code{validation}).}
 
 \item{early_stop}{An integer or \code{NULL}. If an integer, it is the
@@ -76,14 +76,14 @@ but it means that the Dataset object cannot be changed after it has been
 constructed. If you'd prefer to be able to change the Dataset object after
 construction, set \code{free_raw_data = FALSE}. Useful for debugging.}
 
-\item{verbose}{Integer. < 0: Fatal, = 0: Error (Warning), = 1: Info,
-> 1: Debug.}
+\item{verbose}{Integer. Verbosity level: < 0 = Fatal, 0 = Error (Warning),
+1 = Info, > 1 = Debug.}
 
 \item{save_tree_error}{Boolean. Whether or not to use the training set
 to compute errors for each tree that will be stored on the record_evals
-attribute. Note that this parameter is mutually exclusive with \code{validation}
-and \code{early_stop} because otherwise it can override the set used for cross
-validation.}
+attribute. Note that this parameter is mutually exclusive with
+\code{validation} and \code{early_stop} because otherwise it can override
+the set used for cross validation.}
 
 \item{...}{Engine arguments, hyperparameters, etc. that are passed on to
 \code{\link[lightgbm]{lgb.train}}.}

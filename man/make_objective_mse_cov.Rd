@@ -2,7 +2,7 @@
 % Please edit documentation in R/objectives.R
 \name{make_objective_mse_cov}
 \alias{make_objective_mse_cov}
-\title{Custom LightGBM objective: MSE + rho * Cov(r, y)^2}
+\title{Custom LightGBM objective: MSE with a squared covariance penalty}
 \usage{
 make_objective_mse_cov(rho, y_mean)
 }
@@ -15,8 +15,8 @@ from the training set and captured here so the centering is stable across
 iterations.}
 }
 \value{
-A function with signature \code{function(preds, dtrain)} suitable for
-passing as the \code{obj} argument of \code{\link[lightgbm:lgb.train]{lightgbm::lgb.train}}.
+A function with signature \verb{function(preds, dtrain)} suitable for
+passing as the \code{obj} argument of \link[lightgbm:lgb.train]{lightgbm::lgb.train}.
 }
 \description{
 Build a custom LightGBM objective callback that minimizes a
@@ -25,14 +25,18 @@ the per-sample residual \code{r = y_pred - y_true} and the (centered) labels
 \code{y_true}. The penalty pushes the model toward "vertical equity" by
 discouraging residuals that systematically scale with \code{y}.
 
-This is an R port of the \code{LGBCovPenalty} objective from
-an active collabration. (https://github.com/nicacevedo/soft-vertical-equity-constrained-mass-appraissal)
-It is intended to be used when the model is trained in log-space (so the
-"diff" residual is equivalent to a log-ratio).
+This is an R port of the \code{LGBCovPenalty} objective from an active
+collaboration (see the
+\href{https://github.com/nicacevedo/soft-vertical-equity-constrained-mass-appraissal}{soft-vertical-equity-constrained-mass-appraissal}
+repository). It is intended to be used when the model is trained in
+log-space (so the "diff" residual is equivalent to a log-ratio).
 
-Penalty (using mean-centered labels y_centered = y_true - mean(y_true)):
-\deqn{cov = (1/n) * sum_i r_i * y_centered_i}
-\deqn{penalty = 0.5 * rho * n * cov^2}
-Diagonal Hessian approximation is used (matches the reference Python
+Penalty (using mean-centered labels \code{y_centered = y_true - mean(y_true)}):
+\deqn{\mathrm{cov} = \frac{1}{n} \sum_{i=1}^{n} r_i \tilde{y}_i}{
+  cov = (1/n) * sum_i r_i * y_centered_i}
+\deqn{\mathrm{penalty} = \frac{\rho}{2} \, n \, \mathrm{cov}^2}{
+  penalty = 0.5 * rho * n * cov^2}
+where \eqn{\tilde{y}}{y_centered} is the vector of mean-centered labels.
+A diagonal Hessian approximation is used (matches the reference Python
 implementation).
 }

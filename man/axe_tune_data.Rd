@@ -11,7 +11,7 @@ axe_tune_data(x)
 }
 \value{
 Iteration object from \code{x} but with CV split and attributes
-  removed.
+removed.
 }
 \description{
 Remove unnecessary attribute data from iteration results objects

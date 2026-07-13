@@ -4,6 +4,7 @@ llm-docs: true
 
 template:
   bootstrap: 5
+  math-rendering: katex
 
 authors:
   sidebar:
@@ -33,8 +34,8 @@ reference:
 - contents:
   - make_objective_mse_cov
 - subtitle: LightGBM hyperparameters
-  desc:: >
-    LightGBM dials:: paramter functions that can be used with tune_ functions.
+  desc: >
+    LightGBM dials:: parameter functions that can be used with tune_ functions.
     Pass them to set_engine to use.
 - contents:
   - param_lgbm

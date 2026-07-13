@@ -1,20 +1,26 @@
-#' Custom LightGBM objective: MSE + rho * Cov(r, y)^2
+#' Custom LightGBM objective: MSE with a squared covariance penalty
 #'
 #' @description Build a custom LightGBM objective callback that minimizes a
 #' standard squared-error loss plus a soft penalty on the covariance between
-#' the per-sample residual `r = y_pred - y_true` and the (centered) labels
+#' the per-sample residual \code{r = y_pred - y_true} and the (centered) labels
 #' `y_true`. The penalty pushes the model toward "vertical equity" by
 #' discouraging residuals that systematically scale with `y`.
 #'
-#' This is an R port of the `LGBCovPenalty` objective from
-#' an active collabration. (https://github.com/nicacevedo/soft-vertical-equity-constrained-mass-appraissal) # nolint
-#' It is intended to be used when the model is trained in log-space (so the
-#' "diff" residual is equivalent to a log-ratio).
+#' This is an R port of the `LGBCovPenalty` objective from an active
+#' collaboration (see the
+# nolint start: line_length_linter.
+#' [soft-vertical-equity-constrained-mass-appraissal](https://github.com/nicacevedo/soft-vertical-equity-constrained-mass-appraissal)
+# nolint end
+#' repository). It is intended to be used when the model is trained in
+#' log-space (so the "diff" residual is equivalent to a log-ratio).
 #'
-#' Penalty (using mean-centered labels y_centered = y_true - mean(y_true)):
-#' \deqn{cov = (1/n) * sum_i r_i * y_centered_i}
-#' \deqn{penalty = 0.5 * rho * n * cov^2}
-#' Diagonal Hessian approximation is used (matches the reference Python
+#' Penalty (using mean-centered labels `y_centered = y_true - mean(y_true)`):
+#' \deqn{\mathrm{cov} = \frac{1}{n} \sum_{i=1}^{n} r_i \tilde{y}_i}{
+#'   cov = (1/n) * sum_i r_i * y_centered_i}
+#' \deqn{\mathrm{penalty} = \frac{\rho}{2} \, n \, \mathrm{cov}^2}{
+#'   penalty = 0.5 * rho * n * cov^2}
+#' where \eqn{\tilde{y}}{y_centered} is the vector of mean-centered labels.
+#' A diagonal Hessian approximation is used (matches the reference Python
 #' implementation).
 #'
 #' @param rho Numeric. Non-negative penalty weight. `rho = 0` recovers plain
