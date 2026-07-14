@@ -80,6 +80,44 @@ test_that("lightgbm alternate objective", {
   expect_equal(info$objective, "huber")
 })
 
+test_that("lightgbm mse_cov custom objective", {
+  skip_if_not_installed("lightgbm")
+
+  fit_with_rho <- function(rho) {
+    parsnip::boost_tree(trees = 50) %>%
+      parsnip::set_engine(
+        engine = "lightgbm",
+        objective = "mse_cov", mse_cov_rho = rho, verbose = -1,
+        max_depth = 15, feature_fraction = 1, min_data_in_leaf = 1
+      ) %>%
+      parsnip::set_mode("regression") %>%
+      parsnip::fit(mpg ~ ., data = mtcars)
+  }
+
+  # predict.lgb.Booster warns that class/response prediction types are
+  # unsupported for custom objectives; numeric predictions still work
+  lgb_fit <- fit_with_rho(0.5)
+  pred <- suppressWarnings(predict(lgb_fit, mtcars[, -1]))
+
+  expect_equal(nrow(pred), nrow(mtcars))
+  expect_true(all(is.finite(pred$.pred)))
+  expect_not_constant_predictions(pred$.pred)
+
+  # The penalty weight should reach the objective: different rho values
+  # must produce different fits
+  pred_plain <- suppressWarnings(predict(fit_with_rho(0), mtcars[, -1]))
+  expect_all_preds_differ(list(pred$.pred, pred_plain$.pred))
+})
+
+test_that("lightgbm mse_cov without mse_cov_rho throws error", {
+  expect_error(
+    parsnip::boost_tree(trees = 10, mode = "regression") %>%
+      parsnip::set_engine("lightgbm", objective = "mse_cov", verbose = -1) %>%
+      parsnip::fit(mpg ~ ., data = mtcars),
+    regexp = "requires `mse_cov_rho`"
+  )
+})
+
 test_that("lightgbm with save_tree_error saves record_evals", {
   model_fit <- parsnip::boost_tree(trees = 50) %>%
     parsnip::set_engine(

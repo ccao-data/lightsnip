@@ -111,8 +111,8 @@ add_boost_tree_lightgbm <- function() {
 #'   but it means that the Dataset object cannot be changed after it has been
 #'   constructed. If you'd prefer to be able to change the Dataset object after
 #'   construction, set \code{free_raw_data = FALSE}. Useful for debugging.
-#' @param verbose Integer. < 0: Fatal, = 0: Error (Warning), = 1: Info,
-#'   > 1: Debug.
+#' @param verbose Integer. Verbosity level: < 0 = Fatal, 0 = Error (Warning),
+#'   1 = Info, > 1 = Debug.
 #' @param save_tree_error Boolean. Whether or not to use the training set
 #'   to compute errors for each tree that will be stored on the record_evals
 #'   attribute. Note that this parameter is mutually exclusive with
@@ -146,8 +146,36 @@ train_lightgbm <- function(x,
   force(y)
   others <- list(...)
 
-  # Set training objective (always regression)
-  if (!any(names(others) %in% c("objective"))) {
+  # Custom objective handling. `mse_cov_rho` is a lightsnip-specific engine
+  # arg used only when `objective == "mse_cov"`; pop it off so it is not
+  # forwarded to lgb.train (which would error on an unknown parameter).
+  mse_cov_rho <- others$mse_cov_rho
+  others$mse_cov_rho <- NULL
+
+  custom_objective <- NULL
+
+  # Sentinel that gates two downstream branches:
+  #   - whether to fall back to the default "regression" objective
+  #   - whether to construct the mse_cov objective callback
+  mse_cov_rho_val <- NULL
+
+  if (!is.null(others$objective) && identical(others$objective, "mse_cov")) {
+    if (is.null(mse_cov_rho)) {
+      rlang::abort(
+        "`objective = \"mse_cov\"` requires `mse_cov_rho` to be set."
+      )
+    }
+    mse_cov_rho_val <- as.numeric(mse_cov_rho)
+    # Clear `objective`/`num_class` so lgb.train doesn't reject the unknown
+    # name when we hand it the callback via `obj`.
+    others$objective <- NULL
+    others$num_class <- NULL
+  }
+
+  # Set training objective default (always regression) when not specified.
+  # Skipped when a custom `obj` callback is in use, since lgb.train will then
+  # supply the gradient/hessian itself and `objective` must be unset.
+  if (is.null(mse_cov_rho_val) && !any(names(others) == "objective")) {
     others$num_class <- 1
     others$objective <- "regression"
   }
@@ -235,6 +263,17 @@ train_lightgbm <- function(x,
     trn_index <- 1:n
   }
 
+  # Build the mse_cov callback against training rows only — `y[val_index]`
+  # is held out for lgb.train's early stopping, so including those labels
+  # in `y_mean` would leak the holdout's label mean into the centering
+  # term used by the covariance penalty on every boosting iteration.
+  if (!is.null(mse_cov_rho_val)) {
+    custom_objective <- make_objective_mse_cov(
+      rho    = mse_cov_rho_val,
+      y_mean = mean(y[trn_index])
+    )
+  }
+
   d <- lightgbm::lgb.Dataset(
     data = as.matrix(x[trn_index, , drop = FALSE]),
     label = y[trn_index],
@@ -268,6 +307,10 @@ train_lightgbm <- function(x,
   }
   if (!is.null(early_stop) && validation > 0) {
     main_args$early_stopping_rounds <- early_stop
+  }
+  # Wire in the custom objective callback (if any) under lgb.train's `obj` arg
+  if (!is.null(custom_objective)) {
+    main_args$obj <- quote(custom_objective)
   }
 
   call <- parsnip::make_call(fun = "lgb.train", ns = "lightgbm", main_args)

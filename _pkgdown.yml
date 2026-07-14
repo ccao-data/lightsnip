@@ -4,6 +4,7 @@ llm-docs: true
 
 template:
   bootstrap: 5
+  math-rendering: katex
 
 authors:
   sidebar:
@@ -26,9 +27,15 @@ reference:
   - train_lightgbm
   - pred_lgb_reg_num
   - multi_predict._lgb.Booster
+- subtitle: Custom objectives
+  desc: >
+    Factory functions that return custom LightGBM objective callbacks for
+    use as the `obj` argument of `lgb.train`.
+- contents:
+  - make_objective_mse_cov
 - subtitle: LightGBM hyperparameters
-  desc:: >
-    LightGBM dials:: paramter functions that can be used with tune_ functions.
+  desc: >
+    LightGBM dials:: parameter functions that can be used with tune_ functions.
     Pass them to set_engine to use.
 - contents:
   - param_lgbm

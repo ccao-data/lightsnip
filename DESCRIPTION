@@ -1,7 +1,7 @@
 Package: lightsnip
 Type: Package
 Title: LightGBM Model Engine for Parsnip
-Version: 0.0.6
+Version: 0.0.7
 Authors@R: c(
     person(given = "Dan", family = "Snow", email="daniel.snow@cookcountyil.gov", role=c("aut", "cre")),
     person(given = "Nicole", family = "Jardine", email="nicole.jardine@cookcountyil.gov", role=c("aut", "ctb")),
@@ -48,5 +48,6 @@ Suggests:
     tune,
     workflows,
     yardstick
-RoxygenNote: 7.2.3
+Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
