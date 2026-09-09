@@ -333,12 +333,15 @@ train_lightgbm <- function(x,
 #'
 #' @export
 pred_lgb_reg_num <- function(object, new_data, type = NULL, ...) {
-  # LightGBM stores `objective = "none"` on boosters trained with a custom
-  # objective callback (e.g. `mse_cov`). predict.lgb.Booster() can't
-  # post-process those, so for its default `type = "response"` it warns and
-  # falls back to "raw" anyway. Request "raw" up front to avoid the warning.
-  # Built-in objectives keep "response" so objectives with a link function
-  # (poisson, gamma, tweedie) are still back-transformed.
+  # Custom objectives like mse_cov get stored by lightgbm as "none", and
+  # predicting on those with the default type ("response") throws a warning
+  # before lightgbm switches to "raw" anyway. Set "raw" up front for custom
+  # objectives to skip the warning. Built-in objectives keep "response",
+  # since some (e.g. poisson) apply an inverse link that "raw" would skip.
+  #
+  # Note that stats::predict() is a generic: because object$fit is an
+  # lgb.Booster, the call is routed to predict.lgb.Booster(), which is
+  # where `type` actually lands.
   if (is.null(type)) {
     type <- if (identical(object$fit$params$objective, "none")) {
       "raw"
