@@ -94,9 +94,10 @@ test_that("lightgbm mse_cov custom objective", {
       parsnip::fit(mpg ~ ., data = mtcars)
   }
 
-  # predict.lgb.Booster warns that class/response prediction types are
-  # unsupported for custom objectives; pred_lgb_reg_num() requests "raw"
-  # predictions for custom objectives so that no warning is emitted
+  # lightgbm stores custom objectives as "none", so predict.lgb.Booster()
+  # has no way to produce the default "response" prediction type: it warns
+  # and falls back to "raw". pred_lgb_reg_num() detects this case and asks
+  # for "raw" directly, which avoids that warning.
   lgb_fit <- fit_with_rho(0.5)
   expect_no_warning(pred <- predict(lgb_fit, mtcars[, -1]))
 
