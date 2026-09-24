@@ -94,10 +94,12 @@ test_that("lightgbm mse_cov custom objective", {
       parsnip::fit(mpg ~ ., data = mtcars)
   }
 
-  # predict.lgb.Booster warns that class/response prediction types are
-  # unsupported for custom objectives; numeric predictions still work
+  # lightgbm stores custom objectives as "none", so predict.lgb.Booster()
+  # has no way to produce the default "response" prediction type: it warns
+  # and falls back to "raw". pred_lgb_reg_num() detects this case and asks
+  # for "raw" directly, which avoids that warning.
   lgb_fit <- fit_with_rho(0.5)
-  pred <- suppressWarnings(predict(lgb_fit, mtcars[, -1]))
+  expect_no_warning(pred <- predict(lgb_fit, mtcars[, -1]))
 
   expect_equal(nrow(pred), nrow(mtcars))
   expect_true(all(is.finite(pred$.pred)))
@@ -105,8 +107,38 @@ test_that("lightgbm mse_cov custom objective", {
 
   # The penalty weight should reach the objective: different rho values
   # must produce different fits
-  pred_plain <- suppressWarnings(predict(fit_with_rho(0), mtcars[, -1]))
+  expect_no_warning(pred_plain <- predict(fit_with_rho(0), mtcars[, -1]))
   expect_all_preds_differ(list(pred$.pred, pred_plain$.pred))
+})
+
+test_that("pred_lgb_reg_num picks predict type based on objective", {
+  # Swap in a predict method that just returns the type it was given, so we
+  # can check which type pred_lgb_reg_num() chose without fitting a model
+  local_mocked_s3_method(
+    "predict", "lgb.Booster",
+    function(object, newdata, type, ...) type
+  )
+  fake_fit <- function(objective) {
+    list(fit = structure(
+      list(params = list(objective = objective)),
+      class = "lgb.Booster"
+    ))
+  }
+
+  # No type given: custom objectives (stored as "none") use "raw", built-in
+  # objectives keep "response"
+  expect_equal(pred_lgb_reg_num(fake_fit("none"), mtcars), "raw")
+  expect_equal(pred_lgb_reg_num(fake_fit("regression"), mtcars), "response")
+
+  # An explicit type is always passed through unchanged
+  expect_equal(
+    pred_lgb_reg_num(fake_fit("none"), mtcars, type = "response"),
+    "response"
+  )
+  expect_equal(
+    pred_lgb_reg_num(fake_fit("regression"), mtcars, type = "raw"),
+    "raw"
+  )
 })
 
 test_that("lightgbm mse_cov without mse_cov_rho throws error", {
