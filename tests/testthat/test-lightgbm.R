@@ -111,6 +111,36 @@ test_that("lightgbm mse_cov custom objective", {
   expect_all_preds_differ(list(pred$.pred, pred_plain$.pred))
 })
 
+test_that("pred_lgb_reg_num picks predict type based on objective", {
+  # Swap in a predict method that just returns the type it was given, so we
+  # can check which type pred_lgb_reg_num() chose without fitting a model
+  local_mocked_s3_method(
+    "predict", "lgb.Booster",
+    function(object, newdata, type, ...) type
+  )
+  fake_fit <- function(objective) {
+    list(fit = structure(
+      list(params = list(objective = objective)),
+      class = "lgb.Booster"
+    ))
+  }
+
+  # No type given: custom objectives (stored as "none") use "raw", built-in
+  # objectives keep "response"
+  expect_equal(pred_lgb_reg_num(fake_fit("none"), mtcars), "raw")
+  expect_equal(pred_lgb_reg_num(fake_fit("regression"), mtcars), "response")
+
+  # An explicit type is always passed through unchanged
+  expect_equal(
+    pred_lgb_reg_num(fake_fit("none"), mtcars, type = "response"),
+    "response"
+  )
+  expect_equal(
+    pred_lgb_reg_num(fake_fit("regression"), mtcars, type = "raw"),
+    "raw"
+  )
+})
+
 test_that("lightgbm mse_cov without mse_cov_rho throws error", {
   expect_error(
     parsnip::boost_tree(trees = 10, mode = "regression") %>%
