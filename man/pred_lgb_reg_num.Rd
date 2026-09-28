@@ -4,13 +4,17 @@
 \alias{pred_lgb_reg_num}
 \title{predict_lightgbm_regression_numeric}
 \usage{
-pred_lgb_reg_num(object, new_data, ...)
+pred_lgb_reg_num(object, new_data, type = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted object.}
 
 \item{new_data}{Data frame in which to look for variables with
 which to predict.}
+
+\item{type}{Prediction type passed to \code{predict.lgb.Booster()}. When
+\code{NULL} (the default), uses \code{"raw"} for models trained with a
+custom objective and \code{"response"} otherwise.}
 
 \item{...}{Additional named arguments passed to the \code{predict()} method
 of the \code{lgb.Booster} object.}

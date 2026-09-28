@@ -325,14 +325,35 @@ train_lightgbm <- function(x,
 #' @param object A fitted object.
 #' @param new_data Data frame in which to look for variables with
 #'   which to predict.
+#' @param type Prediction type passed to \code{predict.lgb.Booster()}. When
+#'   \code{NULL} (the default), uses \code{"raw"} for models trained with a
+#'   custom objective and \code{"response"} otherwise.
 #' @param ... Additional named arguments passed to the \code{predict()} method
 #'   of the \code{lgb.Booster} object.
 #'
 #' @export
-pred_lgb_reg_num <- function(object, new_data, ...) {
+pred_lgb_reg_num <- function(object, new_data, type = NULL, ...) {
+  # Custom objectives like mse_cov get stored by lightgbm as "none", and
+  # predicting on those with the default type ("response") throws a warning
+  # before lightgbm switches to "raw" anyway. Set "raw" up front for custom
+  # objectives to skip the warning. Built-in objectives keep "response",
+  # since some (e.g. poisson) apply an inverse link that "raw" would skip.
+  #
+  # Note that stats::predict() is a generic: because object$fit is an
+  # lgb.Booster, the call is routed to predict.lgb.Booster(), which is
+  # where `type` actually lands.
+  if (is.null(type)) {
+    type <- if (identical(object$fit$params$objective, "none")) {
+      "raw"
+    } else {
+      "response"
+    }
+  }
+
   stats::predict(
     object$fit,
     as.matrix(new_data),
+    type = type,
     params = list(predict_disable_shape_check = TRUE),
     ...
   )
